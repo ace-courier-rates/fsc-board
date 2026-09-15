@@ -15,9 +15,9 @@
     Output: site/trend.json (public) and site/trend.js (the same data for the dashboard
     opened off disk).
 
-    The correlation pairs each ACE surcharge change with the Vancouver diesel price of
-    the calendar month before it took effect. Months where ACE's rate isn't confirmed
-    are left empty rather than filled in.
+    The correlation compares ACE's day-weighted average BC surcharge for each month with
+    that month's Vancouver diesel price, over months where ACE's rate is on record for at
+    least half the days. Months where it isn't are left empty rather than filled in.
 
 .PARAMETER Months
     Diesel months to show. Default 12.
@@ -142,15 +142,42 @@ function Get-AceOn {
     return $null
 }
 
+# ACE's day-weighted average BC surcharge for a month - only when its rate is on record
+# for at least half the month's days. Diesel is monthly and ACE changes its rate almost
+# weekly, so a monthly average is the like-for-like comparison.
+function Get-AceMonthAverage {
+    param([string] $Month)
+    $start = [datetime]::ParseExact("$Month-01", 'yyyy-MM-dd', $ci)
+    $end   = $start.AddMonths(1).AddDays(-1)
+    $days  = ($end - $start).Days + 1
+    $sum = 0.0; $covered = 0
+    for ($d = $start; $d -le $end; $d = $d.AddDays(1)) {
+        $v = Get-AceOn $d
+        if ($null -ne $v) { $sum += $v; $covered++ }
+    }
+    if ($covered -ge $days / 2) {
+        return [pscustomobject]@{ average = [math]::Round($sum / $covered, 1); covered = $covered; days = $days }
+    }
+    return $null
+}
+
+$aceByMonth = @{}
+foreach ($m in $allMonths) {
+    $a = Get-AceMonthAverage $m
+    if ($a) { $aceByMonth[$m] = $a }
+}
+
 $monthRows = foreach ($m in $shown) {
-    $mid = [datetime]::ParseExact("$m-15", 'yyyy-MM-dd', $ci)
     $vic = $null
     if ($diesel['victoria'].ContainsKey($m)) { $vic = $diesel['victoria'][$m] }
+    $avg = $null; $cov = $null
+    if ($aceByMonth.ContainsKey($m)) { $avg = $aceByMonth[$m].average; $cov = "$($aceByMonth[$m].covered)/$($aceByMonth[$m].days)" }
     [pscustomobject]@{
-        month     = $m
-        vancouver = $diesel['vancouver'][$m]
-        victoria  = $vic
-        ace_bc    = Get-AceOn $mid
+        month        = $m
+        vancouver    = $diesel['vancouver'][$m]
+        victoria     = $vic
+        ace_bc       = $avg
+        ace_coverage = $cov
     }
 }
 
@@ -160,11 +187,10 @@ $allRows = foreach ($m in $allMonths) {
     [pscustomobject]@{ month = $m; vancouver = $diesel['vancouver'][$m]; victoria = $vic }
 }
 
-# Pair each change with the previous calendar month's Vancouver price.
-$pairs = foreach ($c in $sorted) {
-    $prior = (ConvertTo-Day $c.effective).AddMonths(-1).ToString('yyyy-MM')
-    if ($diesel['vancouver'].ContainsKey($prior)) {
-        [pscustomobject]@{ effective = $c.effective; bc = [double]$c.bc; prior_month = $prior; diesel = $diesel['vancouver'][$prior] }
+# Correlate over every month with both a diesel price and ACE's rate on record.
+$pairs = foreach ($m in $allMonths) {
+    if ($aceByMonth.ContainsKey($m)) {
+        [pscustomobject]@{ month = $m; bc = $aceByMonth[$m].average; diesel = $diesel['vancouver'][$m] }
     }
 }
 [object[]] $pairArray = @($pairs)
@@ -202,12 +228,13 @@ $trend = [pscustomobject]@{
     correlation  = [pscustomobject]@{
         r     = $r
         n     = $pairArray.Count
-        basis = "ACE's BC surcharge at each change vs the Vancouver diesel price of the month before"
+        from  = $(if ($pairArray.Count) { $pairArray[0].month } else { $null })
+        basis = "ACE's average BC surcharge vs the same month's Vancouver diesel price, over months with ACE's rate on record for at least half the month"
     }
     diesel_all   = $allRowArray
     sources      = [pscustomobject]@{
         diesel = 'Statistics Canada, table 18-10-0001-01'
-        ace    = 'ACE Courier FAQ page; earlier rates from Internet Archive copies'
+        ace    = 'ACE Courier fuel surcharge notices and FAQ page, with earlier rates from Internet Archive copies'
     }
 }
 
@@ -222,4 +249,4 @@ if (-not $LocalOnly) {
     }
 }
 
-Write-Host ("Trend: {0} months ({1} to {2}), {3} ACE changes, r={4} (n={5})" -f $monthArray.Count, $shown[0], $shown[-1], $sorted.Count, $r, $pairArray.Count)
+Write-Host ("Trend: {0} months ({1} to {2}), {3} ACE changes, r={4} over {5} months" -f $monthArray.Count, $shown[0], $shown[-1], $sorted.Count, $r, $pairArray.Count)

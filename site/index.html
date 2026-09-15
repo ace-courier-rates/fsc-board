@@ -199,13 +199,13 @@
         <summary>Show as table</summary>
         <div class="scroller">
           <table id="trendTable">
-            <thead><tr><th>Month</th><th class="num">Diesel, Vancouver (&cent;/L)</th><th class="num">Diesel, Victoria (&cent;/L)</th><th class="num">ACE BC surcharge, mid-month</th></tr></thead>
+            <thead><tr><th>Month</th><th class="num">Diesel, Vancouver (&cent;/L)</th><th class="num">Diesel, Victoria (&cent;/L)</th><th class="num">ACE BC surcharge, month average</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="scroller">
           <table id="changeTable">
-            <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, Vancouver, month before</th><th>Confirmed through</th></tr></thead>
+            <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, Vancouver, that month</th><th>Confirmed through</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -500,8 +500,13 @@
       }
     });
 
-    // Markers at each change that happens inside the window.
-    segs.forEach(function (s) { if (s.start >= f.x0) endDot(svg, xOf(f, s.start), y(s.bc)); });
+    // Mark a span's start only where it follows a gap - contiguous changes already read
+    // from their risers, and a dot on every weekly change is clutter.
+    segs.forEach(function (s, i) {
+      var prev = segs[i - 1];
+      var afterGap = !prev || s.from - prev.to > 2 * DAY;
+      if (s.start >= f.x0 && afterGap) endDot(svg, xOf(f, s.start), y(s.bc));
+    });
 
     var last = segs[segs.length - 1];
     if (last) {
@@ -541,7 +546,7 @@
       tip.appendChild(r);
     }
     row(m.vancouver != null ? m.vancouver.toFixed(1) + '¢/L' : '—', 'Diesel, Vancouver');
-    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge');
+    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge, month avg');
     tip.hidden = false;
 
     // Position beside the crosshair, inside the card.
@@ -601,9 +606,10 @@
     corr.textContent = '';
     if (c && c.r != null) {
       var strength = Math.abs(c.r) >= 0.8 ? 'closely' : Math.abs(c.r) >= 0.5 ? 'moderately' : 'only loosely';
-      corr.appendChild(document.createTextNode("Across the " + c.n + " surcharge changes on record, ACE's BC surcharge tracked the previous month's Vancouver diesel price " + strength + ' '));
+      var since = c.from ? ' since ' + monthLabel(c.from, true) : '';
+      corr.appendChild(document.createTextNode("Across the " + c.n + " months" + since + " with ACE's rate on record, ACE's average BC surcharge moved " + strength + " with that month's Vancouver diesel price "));
       var s = document.createElement('strong'); s.textContent = '(correlation ' + c.r.toFixed(2) + ')'; corr.appendChild(s);
-      corr.appendChild(document.createTextNode(c.n < 8 ? '. With this few changes on record, treat it as indicative.' : '.'));
+      corr.appendChild(document.createTextNode(c.n < 8 ? '. With this few months on record, treat it as indicative.' : '.'));
     }
 
     var tb = document.querySelector('#trendTable tbody');
@@ -625,10 +631,9 @@
     var cb = document.querySelector('#changeTable tbody');
     cb.textContent = '';
     t.ace_segments.slice().reverse().forEach(function (s) {
-      var d = new Date(utc(s.from)); d.setUTCMonth(d.getUTCMonth() - 1);
-      var prior = d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2);
+      var ym = s.from.slice(0, 7);
       var tr = document.createElement('tr');
-      [fmtDate(s.from), s.bc.toFixed(1) + '%', byMonth[prior] != null ? byMonth[prior].toFixed(1) + '¢' : '—', fmtDate(s.to)]
+      [fmtDate(s.from), s.bc.toFixed(1) + '%', byMonth[ym] != null ? byMonth[ym].toFixed(1) + '¢' : '—', fmtDate(s.to)]
         .forEach(function (v, i) {
           var td = document.createElement('td'); td.textContent = v; if (i === 1 || i === 2) td.className = 'num'; tr.appendChild(td);
         });
