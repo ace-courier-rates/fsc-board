@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fuel Surcharge Board</title>
+<style>
+  :root {
+    --bg:        #f6f7f9;
+    --surface:   #ffffff;
+    --border:    #e2e5ea;
+    --text:      #16181d;
+    --muted:     #6b7280;
+    --faint:     #9aa1ab;
+    --ace:       #0b5fff;
+    --ace-soft:  #eaf1ff;
+    --win:       #0f7b45;
+    --win-soft:  #e6f4ec;
+    --lose:      #b4341f;
+    --lose-soft: #fdeeea;
+    --warn:      #8a6100;
+    --warn-soft: #fdf3dd;
+    --radius:    10px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg:#0f1115; --surface:#171a20; --border:#282d36; --text:#e8eaee;
+      --muted:#98a0ac; --faint:#6c7480;
+      --ace:#5b9bff; --ace-soft:#16233b;
+      --win:#4fc98a; --win-soft:#12291d;
+      --lose:#ff8f75; --lose-soft:#2e1a15;
+      --warn:#e0b45e; --warn-soft:#2b2312;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg:#0f1115; --surface:#171a20; --border:#282d36; --text:#e8eaee;
+    --muted:#98a0ac; --faint:#6c7480;
+    --ace:#5b9bff; --ace-soft:#16233b;
+    --win:#4fc98a; --win-soft:#12291d;
+    --lose:#ff8f75; --lose-soft:#2e1a15;
+    --warn:#e0b45e; --warn-soft:#2b2312;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
+
+  header { margin-bottom: 28px; }
+  h1 { font-size: 24px; font-weight: 650; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .sub { color: var(--muted); font-size: 14px; margin: 0; }
+
+  .benchmark {
+    display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
+    background: var(--ace-soft); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 18px 20px; margin: 22px 0 8px;
+  }
+  .benchmark .label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
+  .benchmark .value { font-size: 34px; font-weight: 680; color: var(--ace); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+  .benchmark .since { font-size: 13px; color: var(--muted); }
+
+  .verdict { font-size: 14px; color: var(--muted); margin: 0 0 26px; padding: 0 2px; }
+  .verdict strong { color: var(--text); font-weight: 620; }
+
+  section { margin-bottom: 30px; }
+  h2 {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
+    color: var(--faint); font-weight: 650; margin: 0 0 10px; padding-left: 2px;
+  }
+
+  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
+  .scroller { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
+  th {
+    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
+    color: var(--faint); font-weight: 650; padding: 11px 14px;
+    border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  .carrier { font-weight: 600; }
+  .service { color: var(--muted); font-size: 13px; }
+  .pct { font-weight: 640; font-size: 15px; }
+  .dash { color: var(--faint); }
+
+  .delta { font-weight: 620; font-size: 13px; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
+  .delta.win  { color: var(--win);  background: var(--win-soft); }
+  .delta.lose { color: var(--lose); background: var(--lose-soft); }
+
+  .badge {
+    display: inline-block; font-size: 11px; font-weight: 620; padding: 2px 7px;
+    border-radius: 5px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
+  }
+  .badge.ok          { color: var(--win);  background: var(--win-soft); }
+  .badge.upcoming    { color: var(--ace);  background: var(--ace-soft); }
+  .badge.stale,
+  .badge.derived     { color: var(--warn); background: var(--warn-soft); }
+  .badge.unavailable { color: var(--faint); background: var(--bg); border: 1px solid var(--border); }
+  .badge.error       { color: var(--lose); background: var(--lose-soft); }
+
+  tr.ace td { background: var(--ace-soft); }
+  tr.ace .carrier { color: var(--ace); }
+  tr.dim td { opacity: .62; }
+
+  .date { font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
+  .note { font-size: 12px; color: var(--faint); margin-top: 3px; max-width: 46ch; line-height: 1.4; }
+  a { color: var(--ace); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  .banner {
+    border-radius: var(--radius); padding: 12px 15px; font-size: 13.5px;
+    margin-bottom: 20px; border: 1px solid var(--border);
+    background: var(--lose-soft); color: var(--lose);
+  }
+  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; line-height: 1.65; }
+  footer p { margin: 0 0 7px; }
+
+  @media (max-width: 620px) {
+    .wrap { padding: 22px 14px 48px; }
+    .benchmark .value { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Fuel Surcharge Board</h1>
+    <p class="sub">ACE Courier and other carriers serving BC &mdash; published fuel surcharges, checked daily.</p>
+  </header>
+
+  <div id="errors"></div>
+
+  <div class="benchmark">
+    <span class="label">ACE &mdash; British&nbsp;Columbia</span>
+    <span class="value" id="bench">&mdash;</span>
+    <span class="since" id="benchSince"></span>
+  </div>
+  <p class="verdict" id="verdict"></p>
+
+  <div id="sections"></div>
+
+  <footer>
+    <p id="stamp"></p>
+    <p>Fuel surcharges reset <strong>weekly</strong> &mdash; most carriers change on Monday, pegged to the diesel index published the prior Thursday. This board re-checks every morning and records each change.</p>
+    <p>Rates are each carrier's own published fuel surcharge, collected from their websites. A fuel surcharge is a percentage of that carrier's base rate, so a lower percentage does not by itself mean a lower price. Confirm with the carrier before shipping.</p>  </footer>
+</div>
+
+<script>
+(function () {
+  // Served over http, the page reads latest.json: live published rates only.
+  // Opened straight off disk it reads the full local data.js instead, which also
+  // carries the carriers with no published rate and the scraper's notes.
+  var INTERNAL = location.protocol === 'file:';
+  var PUBLIC_STATUSES = { ok: 1, upcoming: 1 };
+
+  var GROUPS = [
+    { key: 'ace',     title: 'ACE Courier' },
+    { key: 'ltl',     title: 'LTL & Freight' },
+    { key: 'parcel',  title: 'Parcel carriers' },
+    { key: 'courier', title: 'Same-day / expedited' }
+  ];
+
+  function esc(s) {
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+    });
+  }
+
+  function fmtDate(iso) {
+    if (!iso) return '';
+    var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+    if (!p) return esc(iso);
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return months[+p[2] - 1] + ' ' + (+p[3]) + ', ' + p[1];
+  }
+
+  function render(data) {
+    if (!data) {
+      document.getElementById('sections').innerHTML =
+        '<div class="banner">Rates are temporarily unavailable. Please check back shortly.</div>';
+      return;
+    }
+
+    var bench = data.ace_benchmark;
+    document.getElementById('bench').textContent = (bench != null ? bench.toFixed(2) + '%' : '—');
+
+    var aceRow = (data.rates || []).filter(function (r) {
+      return r.carrier === 'ACE Courier' && r.service === 'British Columbia';
+    })[0];
+    if (aceRow && aceRow.effective_from) {
+      document.getElementById('benchSince').textContent = 'effective ' + fmtDate(aceRow.effective_from);
+    }
+
+    // Headline: how ACE compares across everything we could actually measure.
+    var compared = (data.rates || []).filter(function (r) {
+      return r.delta_points != null && r.status === 'ok';
+    });
+    var cheaper = compared.filter(function (r) { return r.delta_points > 0; });
+    var v = document.getElementById('verdict');
+    if (compared.length) {
+      var spread = cheaper.map(function (r) { return r.delta_points; });
+      var lo = Math.min.apply(null, spread), hi = Math.max.apply(null, spread);
+      v.innerHTML = 'ACE is cheaper on fuel than <strong>' + cheaper.length + ' of ' + compared.length +
+        '</strong> comparable published rates' +
+        (cheaper.length ? ', by <strong>' + lo.toFixed(1) + '&ndash;' + hi.toFixed(1) +
+        ' percentage points</strong>' : '') + '.';
+    } else {
+      v.textContent = 'No comparable published rates available yet.';
+    }
+
+    if (INTERNAL && data.errors && data.errors.length) {
+      document.getElementById('errors').innerHTML =
+        '<div class="banner"><strong>' + data.errors.length + ' scraper(s) failed.</strong> ' +
+        data.errors.map(function (e) { return esc(e.carrier) + ' &mdash; ' + esc(e.error); }).join('; ') +
+        '</div>';
+    }
+
+    var html = '';
+    GROUPS.forEach(function (g) {
+      var rows = (data.rates || []).filter(function (r) {
+        return (r.segment || 'parcel') === g.key && (INTERNAL || PUBLIC_STATUSES[r.status]);
+      });
+      if (!rows.length) return;
+
+      // Live rates first, then upcoming/derived, then anything we couldn't get.
+      var rank = { ok: 0, upcoming: 1, derived: 2, manual: 3, stale: 4, unavailable: 5, error: 6 };
+      // NB: `rank[s] || 9` would map ok's rank of 0 to 9 - check for undefined instead.
+      function rankOf(s) { return rank[s] === undefined ? 9 : rank[s]; }
+      rows.sort(function (a, b) {
+        var d = rankOf(a.status) - rankOf(b.status);
+        if (d) return d;
+        d = (b.percent || 0) - (a.percent || 0);
+        if (d) return d;
+        return a.carrier.localeCompare(b.carrier);
+      });
+
+      html += '<section><h2>' + esc(g.title) + '</h2><div class="card"><div class="scroller"><table>' +
+              '<thead><tr><th>Carrier</th><th class="num">FSC</th><th class="num">vs ACE</th>' +
+              '<th>Effective</th><th>Status</th></tr></thead><tbody>';
+
+      rows.forEach(function (r) {
+        var isAce = r.carrier === 'ACE Courier';
+        var muted = (r.status === 'unavailable' || r.status === 'error');
+        var cls = (isAce ? 'ace' : '') + (muted ? ' dim' : '');
+
+        var pct = (r.percent > 0)
+          ? '<span class="pct">' + r.percent.toFixed(2) + '%</span>'
+          : '<span class="dash">&mdash;</span>';
+
+        var delta = '';
+        if (r.delta_points != null) {
+          // Positive delta = competitor charges more = ACE wins.
+          var win = r.delta_points > 0;
+          var tip = r.benchmark ? ' title="vs ' + esc(r.benchmark) + '"' : '';
+          delta = '<span class="delta ' + (win ? 'win' : 'lose') + '"' + tip + '>' +
+                  (win ? '+' : '') + r.delta_points.toFixed(1) + ' pt</span>';
+          if (r.benchmark && r.benchmark.indexOf('FTL') !== -1) {
+            delta += '<div class="note" style="margin-top:4px">vs ACE FTL</div>';
+          }
+        }
+
+        var when = r.effective_from ? fmtDate(r.effective_from) : '';
+        if (r.effective_to) when += ' &ndash; ' + fmtDate(r.effective_to);
+
+        var name = r.source
+          ? '<a href="' + esc(r.source) + '" target="_blank" rel="noopener">' + esc(r.carrier) + '</a>'
+          : esc(r.carrier);
+
+        html += '<tr class="' + cls + '">' +
+          '<td><div class="carrier">' + name + '</div>' +
+              '<div class="service">' + esc(r.service) + '</div>' +
+              (r.note && (INTERNAL || r.status === 'upcoming') ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</td>' +
+          '<td class="num">' + pct + '</td>' +
+          '<td class="num">' + delta + '</td>' +
+          '<td class="date">' + when + '</td>' +
+          '<td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + '</span></td>' +
+          '</tr>';
+      });
+
+      html += '</tbody></table></div></div></section>';
+    });
+
+    document.getElementById('sections').innerHTML = html;
+
+    var when = data.generated_at ? new Date(data.generated_at) : null;
+    document.getElementById('stamp').textContent =
+      'Last checked ' + (when ? when.toLocaleString() : data.generated_date) +
+      ' — ' + (data.ok_count || 0) + ' rates scraped live.';
+  }
+
+  if (INTERNAL) {
+    // file:// blocks fetch but not <script src>. data.js is never published, so it is
+    // only requested here, off disk.
+    var s = document.createElement('script');
+    s.src = 'data.js';
+    s.onload = function () { render(window.FSC_DATA); };
+    s.onerror = function () { render(null); };
+    document.head.appendChild(s);
+  } else {
+    fetch('latest.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(render)
+      .catch(function () { render(null); });
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+# Internal data - full snapshot with notes and errors, and manually entered rates.
+# Never committed; the public snapshot is site/latest.json.
+data/latest.json
+data/manual.json
+site/data.js
+
+# Unattended run logs
+*.log
+
+# Windows noise
+Thumbs.db
+desktop.ini
+
+# Local screenshots of the dashboard (may show the internal view)
+preview-screenshot*.png

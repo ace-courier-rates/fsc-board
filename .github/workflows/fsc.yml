@@ -1,0 +1,68 @@
+name: Fuel surcharge check
+
+on:
+  schedule:
+    # 13:00 UTC = 06:00 Pacific (PDT) / 05:00 (PST). Carriers post Monday changes
+    # a few days ahead, so a daily check catches every move without hammering them.
+    - cron: '0 13 * * *'
+  workflow_dispatch:        # lets you run it on demand from the Actions tab
+  push:
+    branches: [main]
+    paths:
+      - 'site/**'
+      - 'Get-FuelSurcharges.ps1'
+      - '.github/workflows/fsc.yml'
+
+permissions:
+  contents: write           # commit refreshed data back to the repo
+  pages: write              # publish the dashboard
+  id-token: write
+
+concurrency:
+  group: fsc
+  cancel-in-progress: false
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Scrape carrier fuel surcharges
+        shell: pwsh
+        run: ./Get-FuelSurcharges.ps1 -Verbose
+
+      - name: Commit any rate changes
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          # Public files only. data/latest.json and site/data.js hold internal notes
+          # and are gitignored.
+          git add data/history.jsonl site/latest.json
+          if git diff --staged --quiet; then
+            echo "No rate changes today."
+          else
+            git commit -m "FSC update $(date -u +%Y-%m-%d)"
+            git push
+          fi
+
+      - name: Assemble the public site
+        # Allowlist: publish exactly these two files and nothing else from the repo.
+        run: |
+          mkdir -p _site
+          cp site/index.html site/latest.json _site/
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: scrape
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

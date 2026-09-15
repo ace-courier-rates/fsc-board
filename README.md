@@ -1,0 +1,121 @@
+# Fuel Surcharge Board
+
+Tracks the published fuel surcharge (FSC) of ACE Courier and other carriers serving
+British Columbia, and shows how each compares with the matching ACE rate.
+
+---
+
+## Quick start
+
+```powershell
+.\Get-FuelSurcharges.ps1        # scrape every carrier and write the data files
+.\Start-Preview.ps1             # view the public dashboard at http://localhost:8080
+.\Register-FscTask.ps1 -RunNow  # refresh the local copy automatically every morning
+```
+
+Runs on Windows PowerShell 5.1 or PowerShell 7, using `curl` as a fallback for sites
+that reject PowerShell's own web requests. No other dependencies.
+
+---
+
+## What it collects
+
+| Carrier | Services tracked | Source |
+|---|---|---|
+| **ACE Courier** | BC, Alberta, FTL / Direct Drive | Public FAQ page |
+| **Comox Pacific Express** | LTL under / over 10,000 lb | Homepage, including next week's posted rate |
+| **Purolator Freight** | Expedited & Standard, LTL and TL | Freight fuel surcharge page |
+| **FedEx** | Express & Ground, intra-Canada | Fuel surcharge tables |
+| **Canada Post** | Domestic parcel | Fuel surcharge page |
+
+Carriers that do not publish a machine-readable rate (for example GLS Canada, which
+renders its rate with JavaScript, and UPS, which blocks automated requests) can be
+tracked locally through `data/manual.json`. Manual entries are never committed or
+published.
+
+### Canpar
+
+Canpar publishes a diesel-price-to-surcharge lookup table rather than the weekly rate.
+Setting `canpar_diesel_price` in the local `data/manual.json` resolves the table into
+a derived rate for the local view.
+
+---
+
+## How the comparison works
+
+Each rate is measured against the matching ACE rate:
+
+- Truckload / FTL services → **ACE FTL / Direct Drive**
+- Everything else → **ACE British Columbia**
+
+`delta_points` is the gap in percentage points; `delta_percent` is the relative gap.
+Both are recorded because a claim like "14% lower" means very different things
+depending on which one is meant.
+
+---
+
+## Files
+
+| File | Committed | Contents |
+|---|---|---|
+| `site/index.html` | yes | The dashboard |
+| `site/latest.json` | yes | **Public snapshot** — live published rates only, no notes or errors |
+| `data/history.jsonl` | yes | Append-only log of published rates, one row per carrier / service / effective date |
+| `data/latest.json` | no | Full snapshot including notes, errors and manual entries |
+| `site/data.js` | no | The full snapshot for the local dashboard |
+| `data/manual.json` | no | Manually entered rates |
+
+The public snapshot is built from an allowlist: only rates with status `ok` or
+`upcoming`, and only the fields the page displays. Served over http, the dashboard
+reads `site/latest.json`. Opened directly from disk, it reads the full `site/data.js`
+and also shows carriers with no published rate.
+
+---
+
+## Hosting
+
+`.github/workflows/fsc.yml` runs the scraper daily at 06:00 Pacific on GitHub Actions,
+commits the public snapshot and history, and publishes the dashboard to GitHub Pages.
+Only `site/index.html` and `site/latest.json` are uploaded to Pages.
+
+To enable it: **Settings → Pages → Source → GitHub Actions**, then
+**Actions → Fuel surcharge check → Run workflow**.
+
+---
+
+## Local daily refresh
+
+`Register-FscTask.ps1` creates a Windows scheduled task that runs the scraper every
+morning under the current user, with no elevation.
+
+```powershell
+.\Register-FscTask.ps1                # daily at 07:15 (default)
+.\Register-FscTask.ps1 -At 06:30      # pick a different time
+.\Register-FscTask.ps1 -Unregister    # remove it
+```
+
+If the machine is off at the scheduled time, the run happens at the next opportunity.
+Each run appends a line to `data/run.log`.
+
+---
+
+## When a scraper breaks
+
+Carrier sites change. When a page no longer matches, that carrier's adapter throws, the
+error is recorded in the local snapshot, and the carrier drops out of the public one
+rather than showing a stale number.
+
+Each adapter is a `Get-Fsc*` function in `Get-FuelSurcharges.ps1`, with the text it
+expects shown in a comment. Fetch the page, look at the text around the number, and
+adjust the pattern.
+
+---
+
+## Caveats
+
+- **Rates change weekly.** Most carriers reset on Monday, based on a diesel index
+  published the previous Thursday. A daily check catches every change.
+- **A surcharge is a percentage of a base rate.** A lower percentage does not by itself
+  mean a lower price; base rates, weight rules and accessorials usually matter more.
+- **Confirm before shipping.** These are published list surcharges. Negotiated accounts
+  and accessorials are not included.
