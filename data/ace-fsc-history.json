@@ -99,7 +99,23 @@
       "bc": 44.3,
       "ab": 35.8,
       "ftl": 59.3,
-      "confirmed_through": "2026-07-26",
+      "confirmed_through": "2026-08-05",
+      "source": "ACE Courier fuel surcharge notice"
+    },
+    {
+      "effective": "2026-08-06",
+      "bc": 47.3,
+      "ab": 38.0,
+      "ftl": 62.3,
+      "confirmed_through": "2026-08-25",
+      "source": "ACE Courier fuel surcharge notice"
+    },
+    {
+      "effective": "2026-08-26",
+      "bc": 48.8,
+      "ab": 39.5,
+      "ftl": 63.8,
+      "confirmed_through": "2026-08-31",
       "source": "ACE Courier fuel surcharge notice"
     },
     {
@@ -108,7 +124,7 @@
       "ab": 40.1,
       "ftl": 65.5,
       "confirmed_through": "2026-09-15",
-      "source": "https://www.acecourier.ca/faq/"
+      "source": "ACE Courier fuel surcharge notice; matches https://www.acecourier.ca/faq/"
     }
   ]
 }

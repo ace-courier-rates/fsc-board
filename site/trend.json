@@ -1,297 +1,307 @@
 {
-  "generated_at": "2026-09-15T19:11:31.1745645Z",
-  "window": {
-    "from": "2025-09-01",
-    "to": "2026-09-15"
-  },
-  "months": [
-    {
-      "month": "2025-09",
-      "vancouver": 179.8,
-      "victoria": 173.7,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2025-10",
-      "vancouver": 177.8,
-      "victoria": 171.8,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2025-11",
-      "vancouver": 177.0,
-      "victoria": 170.5,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2025-12",
-      "vancouver": 161.2,
-      "victoria": 155.3,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2026-01",
-      "vancouver": 166.4,
-      "victoria": 158.8,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2026-02",
-      "vancouver": 181.3,
-      "victoria": 175.0,
-      "ace_bc": 28.6,
-      "ace_coverage": "17/28"
-    },
-    {
-      "month": "2026-03",
-      "vancouver": 235.7,
-      "victoria": 227.8,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2026-04",
-      "vancouver": 255.3,
-      "victoria": 251.4,
-      "ace_bc": null,
-      "ace_coverage": null
-    },
-    {
-      "month": "2026-05",
-      "vancouver": 242.6,
-      "victoria": 236.7,
-      "ace_bc": 46.3,
-      "ace_coverage": "20/31"
-    },
-    {
-      "month": "2026-06",
-      "vancouver": 222.9,
-      "victoria": 217.8,
-      "ace_bc": 42.5,
-      "ace_coverage": "30/30"
-    },
-    {
-      "month": "2026-07",
-      "vancouver": 235.4,
-      "victoria": 228.7,
-      "ace_bc": 40.8,
-      "ace_coverage": "26/31"
-    },
-    {
-      "month": "2026-08",
-      "vancouver": 251.7,
-      "victoria": 245.7,
-      "ace_bc": null,
-      "ace_coverage": null
-    }
-  ],
-  "ace_segments": [
-    {
-      "from": "2025-02-07",
-      "to": "2025-08-01",
-      "bc": 32.1
-    },
-    {
-      "from": "2025-09-26",
-      "to": "2025-10-15",
-      "bc": 26.9
-    },
-    {
-      "from": "2026-01-27",
-      "to": "2026-02-17",
-      "bc": 28.6
-    },
-    {
-      "from": "2026-05-12",
-      "to": "2026-05-18",
-      "bc": 47.5
-    },
-    {
-      "from": "2026-05-19",
-      "to": "2026-05-31",
-      "bc": 45.7
-    },
-    {
-      "from": "2026-06-01",
-      "to": "2026-06-07",
-      "bc": 42.4
-    },
-    {
-      "from": "2026-06-08",
-      "to": "2026-06-22",
-      "bc": 44.2
-    },
-    {
-      "from": "2026-06-23",
-      "to": "2026-07-01",
-      "bc": 39.4
-    },
-    {
-      "from": "2026-07-02",
-      "to": "2026-07-07",
-      "bc": 37.9
-    },
-    {
-      "from": "2026-07-08",
-      "to": "2026-07-14",
-      "bc": 38.2
-    },
-    {
-      "from": "2026-07-15",
-      "to": "2026-07-18",
-      "bc": 40.7
-    },
-    {
-      "from": "2026-07-19",
-      "to": "2026-07-25",
-      "bc": 45.8
-    },
-    {
-      "from": "2026-07-26",
-      "to": "2026-07-26",
-      "bc": 44.3
-    },
-    {
-      "from": "2026-09-01",
-      "to": "2026-09-15",
-      "bc": 50.5
-    }
-  ],
-  "correlation": {
-    "r": 0.92,
-    "n": 10,
-    "from": "2025-02",
-    "basis": "ACE's average BC surcharge vs the same month's Vancouver diesel price, over months with ACE's rate on record for at least half the month"
-  },
-  "diesel_all": [
-    {
-      "month": "2024-09",
-      "vancouver": 179.2,
-      "victoria": 173.7
-    },
-    {
-      "month": "2024-10",
-      "vancouver": 185.4,
-      "victoria": 178.7
-    },
-    {
-      "month": "2024-11",
-      "vancouver": 186.8,
-      "victoria": 180.2
-    },
-    {
-      "month": "2024-12",
-      "vancouver": 181.9,
-      "victoria": 175.3
-    },
-    {
-      "month": "2025-01",
-      "vancouver": 192.3,
-      "victoria": 185.9
-    },
-    {
-      "month": "2025-02",
-      "vancouver": 192.3,
-      "victoria": 186.1
-    },
-    {
-      "month": "2025-03",
-      "vancouver": 190.3,
-      "victoria": 183.8
-    },
-    {
-      "month": "2025-04",
-      "vancouver": 166.7,
-      "victoria": 160.3
-    },
-    {
-      "month": "2025-05",
-      "vancouver": 170.3,
-      "victoria": 165.4
-    },
-    {
-      "month": "2025-06",
-      "vancouver": 175.8,
-      "victoria": 169.4
-    },
-    {
-      "month": "2025-07",
-      "vancouver": 180.7,
-      "victoria": 174.4
-    },
-    {
-      "month": "2025-08",
-      "vancouver": 177.5,
-      "victoria": 171.0
-    },
-    {
-      "month": "2025-09",
-      "vancouver": 179.8,
-      "victoria": 173.7
-    },
-    {
-      "month": "2025-10",
-      "vancouver": 177.8,
-      "victoria": 171.8
-    },
-    {
-      "month": "2025-11",
-      "vancouver": 177.0,
-      "victoria": 170.5
-    },
-    {
-      "month": "2025-12",
-      "vancouver": 161.2,
-      "victoria": 155.3
-    },
-    {
-      "month": "2026-01",
-      "vancouver": 166.4,
-      "victoria": 158.8
-    },
-    {
-      "month": "2026-02",
-      "vancouver": 181.3,
-      "victoria": 175.0
-    },
-    {
-      "month": "2026-03",
-      "vancouver": 235.7,
-      "victoria": 227.8
-    },
-    {
-      "month": "2026-04",
-      "vancouver": 255.3,
-      "victoria": 251.4
-    },
-    {
-      "month": "2026-05",
-      "vancouver": 242.6,
-      "victoria": 236.7
-    },
-    {
-      "month": "2026-06",
-      "vancouver": 222.9,
-      "victoria": 217.8
-    },
-    {
-      "month": "2026-07",
-      "vancouver": 235.4,
-      "victoria": 228.7
-    },
-    {
-      "month": "2026-08",
-      "vancouver": 251.7,
-      "victoria": 245.7
-    }
-  ],
-  "sources": {
-    "diesel": "Statistics Canada, table 18-10-0001-01",
-    "ace": "ACE Courier fuel surcharge notices and FAQ page, with earlier rates from Internet Archive copies"
-  }
+    "generated_at":  "2026-09-15T19:15:41.7614953Z",
+    "window":  {
+                   "from":  "2025-09-01",
+                   "to":  "2026-09-15"
+               },
+    "months":  [
+                   {
+                       "month":  "2025-09",
+                       "vancouver":  179.8,
+                       "victoria":  173.7,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2025-10",
+                       "vancouver":  177.8,
+                       "victoria":  171.8,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2025-11",
+                       "vancouver":  177,
+                       "victoria":  170.5,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2025-12",
+                       "vancouver":  161.2,
+                       "victoria":  155.3,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2026-01",
+                       "vancouver":  166.4,
+                       "victoria":  158.8,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2026-02",
+                       "vancouver":  181.3,
+                       "victoria":  175,
+                       "ace_bc":  28.6,
+                       "ace_coverage":  "17/28"
+                   },
+                   {
+                       "month":  "2026-03",
+                       "vancouver":  235.7,
+                       "victoria":  227.8,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2026-04",
+                       "vancouver":  255.3,
+                       "victoria":  251.4,
+                       "ace_bc":  null,
+                       "ace_coverage":  null
+                   },
+                   {
+                       "month":  "2026-05",
+                       "vancouver":  242.6,
+                       "victoria":  236.7,
+                       "ace_bc":  46.3,
+                       "ace_coverage":  "20/31"
+                   },
+                   {
+                       "month":  "2026-06",
+                       "vancouver":  222.9,
+                       "victoria":  217.8,
+                       "ace_bc":  42.5,
+                       "ace_coverage":  "30/30"
+                   },
+                   {
+                       "month":  "2026-07",
+                       "vancouver":  235.4,
+                       "victoria":  228.7,
+                       "ace_bc":  41.4,
+                       "ace_coverage":  "31/31"
+                   },
+                   {
+                       "month":  "2026-08",
+                       "vancouver":  251.7,
+                       "victoria":  245.7,
+                       "ace_bc":  47.1,
+                       "ace_coverage":  "31/31"
+                   }
+               ],
+    "ace_segments":  [
+                         {
+                             "from":  "2025-02-07",
+                             "to":  "2025-08-01",
+                             "bc":  32.1
+                         },
+                         {
+                             "from":  "2025-09-26",
+                             "to":  "2025-10-15",
+                             "bc":  26.9
+                         },
+                         {
+                             "from":  "2026-01-27",
+                             "to":  "2026-02-17",
+                             "bc":  28.6
+                         },
+                         {
+                             "from":  "2026-05-12",
+                             "to":  "2026-05-18",
+                             "bc":  47.5
+                         },
+                         {
+                             "from":  "2026-05-19",
+                             "to":  "2026-05-31",
+                             "bc":  45.7
+                         },
+                         {
+                             "from":  "2026-06-01",
+                             "to":  "2026-06-07",
+                             "bc":  42.4
+                         },
+                         {
+                             "from":  "2026-06-08",
+                             "to":  "2026-06-22",
+                             "bc":  44.2
+                         },
+                         {
+                             "from":  "2026-06-23",
+                             "to":  "2026-07-01",
+                             "bc":  39.4
+                         },
+                         {
+                             "from":  "2026-07-02",
+                             "to":  "2026-07-07",
+                             "bc":  37.9
+                         },
+                         {
+                             "from":  "2026-07-08",
+                             "to":  "2026-07-14",
+                             "bc":  38.2
+                         },
+                         {
+                             "from":  "2026-07-15",
+                             "to":  "2026-07-18",
+                             "bc":  40.7
+                         },
+                         {
+                             "from":  "2026-07-19",
+                             "to":  "2026-07-25",
+                             "bc":  45.8
+                         },
+                         {
+                             "from":  "2026-07-26",
+                             "to":  "2026-08-05",
+                             "bc":  44.3
+                         },
+                         {
+                             "from":  "2026-08-06",
+                             "to":  "2026-08-25",
+                             "bc":  47.3
+                         },
+                         {
+                             "from":  "2026-08-26",
+                             "to":  "2026-08-31",
+                             "bc":  48.8
+                         },
+                         {
+                             "from":  "2026-09-01",
+                             "to":  "2026-09-15",
+                             "bc":  50.5
+                         }
+                     ],
+    "correlation":  {
+                        "r":  0.95,
+                        "n":  11,
+                        "from":  "2025-02",
+                        "basis":  "ACE\u0027s average BC surcharge vs the same month\u0027s Vancouver diesel price, over months with ACE\u0027s rate on record for at least half the month"
+                    },
+    "diesel_all":  [
+                       {
+                           "month":  "2024-09",
+                           "vancouver":  179.2,
+                           "victoria":  173.7
+                       },
+                       {
+                           "month":  "2024-10",
+                           "vancouver":  185.4,
+                           "victoria":  178.7
+                       },
+                       {
+                           "month":  "2024-11",
+                           "vancouver":  186.8,
+                           "victoria":  180.2
+                       },
+                       {
+                           "month":  "2024-12",
+                           "vancouver":  181.9,
+                           "victoria":  175.3
+                       },
+                       {
+                           "month":  "2025-01",
+                           "vancouver":  192.3,
+                           "victoria":  185.9
+                       },
+                       {
+                           "month":  "2025-02",
+                           "vancouver":  192.3,
+                           "victoria":  186.1
+                       },
+                       {
+                           "month":  "2025-03",
+                           "vancouver":  190.3,
+                           "victoria":  183.8
+                       },
+                       {
+                           "month":  "2025-04",
+                           "vancouver":  166.7,
+                           "victoria":  160.3
+                       },
+                       {
+                           "month":  "2025-05",
+                           "vancouver":  170.3,
+                           "victoria":  165.4
+                       },
+                       {
+                           "month":  "2025-06",
+                           "vancouver":  175.8,
+                           "victoria":  169.4
+                       },
+                       {
+                           "month":  "2025-07",
+                           "vancouver":  180.7,
+                           "victoria":  174.4
+                       },
+                       {
+                           "month":  "2025-08",
+                           "vancouver":  177.5,
+                           "victoria":  171
+                       },
+                       {
+                           "month":  "2025-09",
+                           "vancouver":  179.8,
+                           "victoria":  173.7
+                       },
+                       {
+                           "month":  "2025-10",
+                           "vancouver":  177.8,
+                           "victoria":  171.8
+                       },
+                       {
+                           "month":  "2025-11",
+                           "vancouver":  177,
+                           "victoria":  170.5
+                       },
+                       {
+                           "month":  "2025-12",
+                           "vancouver":  161.2,
+                           "victoria":  155.3
+                       },
+                       {
+                           "month":  "2026-01",
+                           "vancouver":  166.4,
+                           "victoria":  158.8
+                       },
+                       {
+                           "month":  "2026-02",
+                           "vancouver":  181.3,
+                           "victoria":  175
+                       },
+                       {
+                           "month":  "2026-03",
+                           "vancouver":  235.7,
+                           "victoria":  227.8
+                       },
+                       {
+                           "month":  "2026-04",
+                           "vancouver":  255.3,
+                           "victoria":  251.4
+                       },
+                       {
+                           "month":  "2026-05",
+                           "vancouver":  242.6,
+                           "victoria":  236.7
+                       },
+                       {
+                           "month":  "2026-06",
+                           "vancouver":  222.9,
+                           "victoria":  217.8
+                       },
+                       {
+                           "month":  "2026-07",
+                           "vancouver":  235.4,
+                           "victoria":  228.7
+                       },
+                       {
+                           "month":  "2026-08",
+                           "vancouver":  251.7,
+                           "victoria":  245.7
+                       }
+                   ],
+    "sources":  {
+                    "diesel":  "Statistics Canada, table 18-10-0001-01",
+                    "ace":  "ACE Courier fuel surcharge notices and FAQ page, with earlier rates from Internet Archive copies"
+                }
 }
