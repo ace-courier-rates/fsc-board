@@ -1,9 +1,51 @@
 {
-  "generated_at": "2026-09-15T18:42:38.6550375Z",
+  "generated_at": "2026-09-15T18:43:47.4628689Z",
   "generated_date": "2026-09-15",
-  "ace_benchmark": null,
-  "ok_count": 7,
+  "ace_benchmark": 50.5,
+  "ok_count": 10,
   "rates": [
+    {
+      "carrier": "ACE Courier",
+      "service": "British Columbia",
+      "segment": "ace",
+      "percent": 50.5,
+      "effective_from": "2026-09-01",
+      "effective_to": "",
+      "status": "ok",
+      "source": "https://www.acecourier.ca/faq/",
+      "note": null,
+      "delta_points": null,
+      "delta_percent": null,
+      "benchmark": null
+    },
+    {
+      "carrier": "ACE Courier",
+      "service": "Alberta",
+      "segment": "ace",
+      "percent": 40.1,
+      "effective_from": "2026-09-01",
+      "effective_to": "",
+      "status": "ok",
+      "source": "https://www.acecourier.ca/faq/",
+      "note": null,
+      "delta_points": null,
+      "delta_percent": null,
+      "benchmark": null
+    },
+    {
+      "carrier": "ACE Courier",
+      "service": "FTL / Direct Drive",
+      "segment": "ace",
+      "percent": 65.5,
+      "effective_from": "2026-09-01",
+      "effective_to": "",
+      "status": "ok",
+      "source": "https://www.acecourier.ca/faq/",
+      "note": null,
+      "delta_points": null,
+      "delta_percent": null,
+      "benchmark": null
+    },
     {
       "carrier": "Comox Pacific Express",
       "service": "LTL under 10,000 lb",
@@ -14,9 +56,9 @@
       "status": "ok",
       "source": "https://www.comoxpacific.com/",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": 24.4,
+      "delta_percent": 48.3,
+      "benchmark": "ACE British Columbia"
     },
     {
       "carrier": "Comox Pacific Express",
@@ -28,9 +70,9 @@
       "status": "ok",
       "source": "https://www.comoxpacific.com/",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": 34.4,
+      "delta_percent": 68.1,
+      "benchmark": "ACE British Columbia"
     },
     {
       "carrier": "Canada Post",
@@ -42,9 +84,9 @@
       "status": "ok",
       "source": "https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": -9.5,
+      "delta_percent": -18.8,
+      "benchmark": "ACE British Columbia"
     },
     {
       "carrier": "Purolator Freight",
@@ -56,9 +98,9 @@
       "status": "ok",
       "source": "https://www.purolator.com/en/shipping/freight-fuel-surcharges",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": -0.3,
+      "delta_percent": -0.6,
+      "benchmark": "ACE British Columbia"
     },
     {
       "carrier": "Purolator Freight",
@@ -70,9 +112,9 @@
       "status": "ok",
       "source": "https://www.purolator.com/en/shipping/freight-fuel-surcharges",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": 39.6,
+      "delta_percent": 60.5,
+      "benchmark": "ACE FTL / Direct Drive"
     },
     {
       "carrier": "Purolator Freight",
@@ -84,9 +126,9 @@
       "status": "ok",
       "source": "https://www.purolator.com/en/shipping/freight-fuel-surcharges",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": -0.3,
+      "delta_percent": -0.6,
+      "benchmark": "ACE British Columbia"
     },
     {
       "carrier": "Purolator Freight",
@@ -98,9 +140,9 @@
       "status": "ok",
       "source": "https://www.purolator.com/en/shipping/freight-fuel-surcharges",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null
+      "delta_points": 32.3,
+      "delta_percent": 49.3,
+      "benchmark": "ACE FTL / Direct Drive"
     }
   ]
 }
