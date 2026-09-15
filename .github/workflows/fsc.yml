@@ -12,6 +12,8 @@ on:
       - 'site/**'
       - 'Get-FuelSurcharges.ps1'
       - '.github/workflows/fsc.yml'
+      # Pushed each morning by the office PC; republish so its FedEx rows go live.
+      - 'data/local-public.json'
 
 permissions:
   contents: write           # commit refreshed data back to the repo
@@ -30,7 +32,9 @@ jobs:
 
       - name: Scrape carrier fuel surcharges
         shell: pwsh
-        run: ./Get-FuelSurcharges.ps1 -Verbose
+        # FedEx blocks GitHub's servers. For any carrier that fails here, use the rows
+        # the office PC published, as long as those rates are still in effect.
+        run: ./Get-FuelSurcharges.ps1 -Verbose -FallbackSnapshot data/local-public.json
 
       - name: Commit any rate changes
         run: |
@@ -43,6 +47,8 @@ jobs:
             echo "No rate changes today."
           else
             git commit -m "FSC update $(date -u +%Y-%m-%d)"
+            # The office PC may have pushed while this ran.
+            git pull --rebase --quiet origin main
             git push
           fi
 

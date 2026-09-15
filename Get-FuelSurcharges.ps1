@@ -23,15 +23,28 @@
 .PARAMETER NoHistory
     Skip appending to history.jsonl (useful when testing).
 
+.PARAMETER PublicSnapshotPath
+    Where to write the public snapshot, relative to this script. Default site/latest.json.
+    The local publisher writes data/local-public.json instead, so it never touches the
+    files the cloud run owns.
+
+.PARAMETER FallbackSnapshot
+    A public snapshot (relative to this script) to borrow rows from when a carrier fails
+    to scrape here - used in the cloud, where FedEx blocks requests, with the snapshot
+    this PC publishes. Borrowed rows are used only while the rate is still in effect.
+
 .EXAMPLE
     .\Get-FuelSurcharges.ps1
     .\Get-FuelSurcharges.ps1 -Verbose
+    .\Get-FuelSurcharges.ps1 -FallbackSnapshot data/local-public.json
 #>
 [CmdletBinding()]
 param(
     [string] $DataDir,
     [int]    $StaleAfterDays = 14,
-    [switch] $NoHistory
+    [switch] $NoHistory,
+    [string] $PublicSnapshotPath,
+    [string] $FallbackSnapshot
 )
 
 $ErrorActionPreference = 'Stop'
@@ -395,6 +408,54 @@ foreach ($name in $adapters.Keys) {
 
 $now = (Get-Date).ToUniversalTime()
 
+# Borrow rows for carriers that failed here from another machine's public snapshot,
+# but only while the borrowed rate is still in effect. A row with an end date is valid
+# through that date; a row without one is valid if the snapshot is under 3 days old.
+if ($FallbackSnapshot) {
+    $fbPath = Join-Path $PSScriptRoot $FallbackSnapshot
+    if (Test-Path $fbPath) {
+        $fb = Get-Content $fbPath -Raw | ConvertFrom-Json
+        $fbAge = $null
+        try { $fbAge = ($now - ([datetime]$fb.generated_at).ToUniversalTime()).TotalDays } catch { }
+        $todayPacific = $now.AddHours(-8).Date
+        $failed = @($errors | ForEach-Object { $_.carrier })
+
+        foreach ($carrier in $failed) {
+            $borrowed = @()
+            foreach ($row in @($fb.rates | Where-Object { $_.carrier -eq $carrier })) {
+                $valid = $false
+                $end = ConvertTo-IsoDate ([string]$row.effective_to)
+                if ($end) {
+                    $valid = [datetime]::ParseExact($end, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture) -ge $todayPacific
+                }
+                elseif ($null -ne $fbAge) {
+                    $valid = $fbAge -le 3
+                }
+                if ($valid) {
+                    $borrowed += New-FscRecord -Carrier $row.carrier -Service $row.service -Segment $row.segment `
+                                     -Percent ([double]$row.percent) -From $row.effective_from -To $row.effective_to `
+                                     -Status $row.status -Source $row.source `
+                                     -Note ("Supplied by the local scrape of " + $fb.generated_date + "; unreachable from here.")
+                }
+            }
+
+            if ($borrowed.Count) {
+                # Replace this carrier's error placeholder with the borrowed rows.
+                $placeholder = @($records | Where-Object { $_.carrier -eq $carrier -and $_.status -eq 'error' })
+                foreach ($p in $placeholder) { [void]$records.Remove($p) }
+                foreach ($b in $borrowed) { $records.Add($b) }
+                Write-Host "$carrier - using $($borrowed.Count) row(s) from $FallbackSnapshot ($($fb.generated_date))"
+            }
+            else {
+                Write-Warning "$carrier - no still-valid rows in $FallbackSnapshot"
+            }
+        }
+    }
+    else {
+        Write-Verbose "Fallback snapshot $fbPath not found"
+    }
+}
+
 # Compare like with like. A competitor's truckload surcharge belongs against ACE's
 # FTL/Direct Drive rate, not against its BC LTL/parcel rate - benchmarking a 99.3%
 # TL number against 50.5% would invent an advantage that isn't real.
@@ -508,8 +569,16 @@ if (Test-Path $siteDir) {
     $dataJsPath = Join-Path $siteDir 'data.js'
     [IO.File]::WriteAllText($dataJsPath, "window.FSC_DATA = $json;`r`n", $utf8NoBom)
     Write-Verbose "Wrote $dataJsPath"
+}
 
+if ($PublicSnapshotPath) {
+    $publicPath = Join-Path $PSScriptRoot $PublicSnapshotPath
+}
+else {
     $publicPath = Join-Path $siteDir 'latest.json'
+}
+$publicDir = Split-Path $publicPath -Parent
+if (Test-Path $publicDir) {
     [IO.File]::WriteAllText($publicPath, $publicJson, $utf8NoBom)
     Write-Verbose "Wrote $publicPath"
 }

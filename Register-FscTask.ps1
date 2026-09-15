@@ -7,7 +7,8 @@
     Creates a task under your own user account. No administrator rights and no
     software installation are required - Task Scheduler is built into Windows.
 
-    The task runs Get-FuelSurcharges.ps1 once a day. If the machine is off or
+    The task runs Publish-FscBoard.ps1 once a day: it refreshes the local board and
+    publishes this PC's public snapshot for the hosted site. If the machine is off or
     asleep at the scheduled time, it runs at the next opportunity instead of
     skipping the day.
 
@@ -56,7 +57,7 @@ if ($Unregister) {
     return
 }
 
-$script = Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1'
+$script = Join-Path $PSScriptRoot 'Publish-FscBoard.ps1'
 if (-not (Test-Path $script)) { throw "Cannot find $script" }
 
 # Validate the time before handing it to the scheduler.
