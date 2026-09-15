@@ -228,7 +228,12 @@ function Get-FscFedEx {
         $pattern = $x.Anchor + '.{0,120}?Effective Date\s*(?<intra>\d+(?:\.\d+)?)\s*%\s*(?<intl>\d+(?:\.\d+)?)\s*%\s*' +
                    '(?<from>[A-Za-z]+ \d{1,2}, \d{4})\s*-\s*(?<to>[A-Za-z]+ \d{1,2}, \d{4})'
         $m = [regex]::Match($t, $pattern, $script:RxOpts)
-        Assert-Match $m $x.Label 'the current surcharge row'
+        if (-not $m.Success) {
+            # FedEx serves some networks (e.g. cloud runners) a different page. Say what
+            # arrived so the log shows whether it's a block page, a redirect or a redesign.
+            $title = [regex]::Match($t, '^.{0,160}').Value
+            throw "$($x.Label) - could not locate the current surcharge row (received $($t.Length) chars of text beginning: '$title')"
+        }
 
         New-FscRecord -Carrier 'FedEx' -Service $x.Service -Percent ([double]$m.Groups['intra'].Value) `
                       -From (ConvertTo-IsoDate $m.Groups['from'].Value) -To (ConvertTo-IsoDate $m.Groups['to'].Value) -Source $url
