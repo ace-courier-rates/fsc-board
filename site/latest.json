@@ -1,8 +1,8 @@
 {
-  "generated_at": "2026-09-15T18:50:53.3275085Z",
+  "generated_at": "2026-09-15T18:51:28.3494284Z",
   "generated_date": "2026-09-15",
   "ace_benchmark": 50.5,
-  "ok_count": 10,
+  "ok_count": 12,
   "rates": [
     {
       "carrier": "ACE Courier",
@@ -143,6 +143,34 @@
       "delta_points": 32.3,
       "delta_percent": 49.3,
       "benchmark": "ACE FTL / Direct Drive"
+    },
+    {
+      "carrier": "FedEx",
+      "service": "Express (intra-Canada)",
+      "segment": "parcel",
+      "percent": 49.5,
+      "effective_from": "2026-09-14",
+      "effective_to": "2026-09-20",
+      "status": "ok",
+      "source": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
+      "note": null,
+      "delta_points": -1.0,
+      "delta_percent": -2.0,
+      "benchmark": "ACE British Columbia"
+    },
+    {
+      "carrier": "FedEx",
+      "service": "Ground (intra-Canada)",
+      "segment": "parcel",
+      "percent": 49.5,
+      "effective_from": "2026-09-14",
+      "effective_to": "2026-09-20",
+      "status": "ok",
+      "source": "https://www.fedex.com/en-ca/shipping/fuel-surcharges.html",
+      "note": null,
+      "delta_points": -1.0,
+      "delta_percent": -2.0,
+      "benchmark": "ACE British Columbia"
     }
   ]
 }
