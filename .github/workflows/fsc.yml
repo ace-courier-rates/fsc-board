@@ -11,6 +11,8 @@ on:
     paths:
       - 'site/**'
       - 'Get-FuelSurcharges.ps1'
+      - 'Get-FuelTrend.ps1'
+      - 'data/ace-fsc-history.json'
       - '.github/workflows/fsc.yml'
       # Pushed each morning by the office PC; republish so its FedEx rows go live.
       - 'data/local-public.json'
@@ -36,13 +38,17 @@ jobs:
         # the office PC published, as long as those rates are still in effect.
         run: ./Get-FuelSurcharges.ps1 -Verbose -FallbackSnapshot data/local-public.json
 
+      - name: Build diesel vs ACE surcharge trend
+        shell: pwsh
+        run: ./Get-FuelTrend.ps1
+
       - name: Commit any rate changes
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           # Public files only. data/latest.json and site/data.js hold internal notes
           # and are gitignored.
-          git add data/history.jsonl site/latest.json
+          git add data/history.jsonl site/latest.json site/trend.json data/ace-fsc-history.json
           if git diff --staged --quiet; then
             echo "No rate changes today."
           else
@@ -53,10 +59,10 @@ jobs:
           fi
 
       - name: Assemble the public site
-        # Allowlist: publish exactly these two files and nothing else from the repo.
+        # Allowlist: publish exactly these files and nothing else from the repo.
         run: |
           mkdir -p _site
-          cp site/index.html site/latest.json _site/
+          cp site/index.html site/latest.json site/trend.json _site/
 
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3

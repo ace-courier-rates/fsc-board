@@ -54,6 +54,10 @@ if ($pull.ExitCode -ne 0) { Write-RunLog "pull failed, continuing with local cop
 # 2. Scrape
 & (Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1') -NoHistory -PublicSnapshotPath $snapshot | Out-Null
 
+# Diesel trend for the local dashboard only; the cloud run owns the committed copy.
+try { & (Join-Path $PSScriptRoot 'Get-FuelTrend.ps1') -LocalOnly | Out-Null }
+catch { Write-RunLog "trend failed - $($_.Exception.Message)" }
+
 if ($NoPush) { Write-RunLog 'scraped; push skipped (-NoPush)'; return }
 
 # 3. Publish the snapshot only

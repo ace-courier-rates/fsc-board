@@ -41,6 +41,24 @@ a derived rate for the local view.
 
 ---
 
+## Diesel vs ACE surcharge trend
+
+`Get-FuelTrend.ps1` builds the 12-month chart below the rate tables:
+
+- **Diesel:** Statistics Canada table 18-10-0001-01, monthly average retail price at
+  self-service stations, Vancouver and Victoria.
+- **ACE surcharge:** `data/ace-fsc-history.json`. Each change is confirmed from its
+  effective date through `confirmed_through`; between entries the rate is not on record
+  and the chart shows a gap. Earlier values come from Internet Archive copies of ACE's
+  FAQ page; new changes are added automatically from the daily scrape.
+- **Correlation:** each surcharge change against the Vancouver diesel price of the month
+  before it took effect.
+
+To fill a gap, add the change to `data/ace-fsc-history.json` with its effective date,
+BC and Alberta rates, and the date it was last confirmed.
+
+---
+
 ## How the comparison works
 
 Each rate is measured against the matching ACE rate:
@@ -76,7 +94,11 @@ and also shows carriers with no published rate.
 
 `.github/workflows/fsc.yml` runs the scraper daily at 06:00 Pacific on GitHub Actions,
 commits the public snapshot and history, and publishes the dashboard to GitHub Pages.
-Only `site/index.html` and `site/latest.json` are uploaded to Pages.
+Only `site/index.html`, `site/latest.json` and `site/trend.json` are uploaded to Pages.
+
+FedEx blocks GitHub's servers, so the office PC's daily task (`Publish-FscBoard.ps1`)
+publishes `data/local-public.json`, and the cloud run uses its rows for any carrier it
+can't reach while those rates are still in effect.
 
 To enable it: **Settings → Pages → Source → GitHub Actions**, then
 **Actions → Fuel surcharge check → Run workflow**.

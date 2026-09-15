@@ -120,6 +120,43 @@
   footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; line-height: 1.65; }
   footer p { margin: 0 0 7px; }
 
+  /* Trend charts. Series colour is slot 1 of the validated reference palette, stepped
+     separately for dark mode; everything else uses the page's own tokens. */
+  :root { --series-1: #2a78d6; --grid: #eceef2; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) { --series-1: #3987e5; --grid: #232830; }
+  }
+  :root[data-theme="dark"] { --series-1: #3987e5; --grid: #232830; }
+
+  .chart-card { position: relative; padding: 18px 18px 8px; }
+  .chart-block + .chart-block { margin-top: 18px; }
+  .chart-title { font-weight: 620; font-size: 14px; }
+  .chart-sub { color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
+  .chart { width: 100%; }
+  .chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+  .chart svg:focus { outline: none; }
+  .chart svg:focus-visible { outline: 2px solid var(--series-1); outline-offset: 4px; border-radius: 4px; }
+  .chart .tick { fill: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
+  .chart .endlabel { fill: var(--text); font-size: 12px; font-weight: 620; }
+  .chart .gaplabel { fill: var(--faint); font-size: 11px; font-style: italic; }
+  .corr { font-size: 13.5px; color: var(--muted); margin: 16px 0 10px; }
+  .corr strong { color: var(--text); font-weight: 620; }
+  .tableview { margin: 4px 0 10px; font-size: 13px; }
+  .tableview summary { cursor: pointer; color: var(--ace); padding: 4px 0; }
+  .tableview table { min-width: 520px; margin-top: 8px; }
+  .tableview td, .tableview th { padding: 7px 10px; }
+  .source { font-size: 12px; color: var(--faint); margin: 8px 2px 0; }
+  .tip {
+    position: absolute; pointer-events: none; z-index: 5; min-width: 170px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0,0,0,.12); padding: 9px 11px; font-size: 12.5px;
+  }
+  .tip .tip-head { color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+  .tip .row { display: flex; align-items: center; gap: 8px; margin-top: 3px; white-space: nowrap; }
+  .tip .key { width: 12px; height: 2px; border-radius: 1px; background: var(--series-1); flex: none; }
+  .tip .val { font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
+  .tip .lbl { color: var(--muted); }
+
   @media (max-width: 620px) {
     .wrap { padding: 22px 14px 48px; }
     .benchmark .value { font-size: 28px; }
@@ -143,6 +180,40 @@
   <p class="verdict" id="verdict"></p>
 
   <div id="sections"></div>
+
+  <section id="trend" hidden>
+    <h2>Diesel prices and ACE's fuel surcharge &mdash; last 12 months</h2>
+    <div class="card chart-card">
+      <div class="chart-block">
+        <div class="chart-title">Diesel, Vancouver</div>
+        <div class="chart-sub">Monthly average retail price at self-service stations, cents per litre</div>
+        <div class="chart" id="chartDiesel"></div>
+      </div>
+      <div class="chart-block">
+        <div class="chart-title">ACE fuel surcharge, British Columbia</div>
+        <div class="chart-sub">Percent of base rate, as published. Gaps are periods with no record of ACE's rate.</div>
+        <div class="chart" id="chartAce"></div>
+      </div>
+      <p class="corr" id="corr"></p>
+      <details class="tableview">
+        <summary>Show as table</summary>
+        <div class="scroller">
+          <table id="trendTable">
+            <thead><tr><th>Month</th><th class="num">Diesel, Vancouver (&cent;/L)</th><th class="num">Diesel, Victoria (&cent;/L)</th><th class="num">ACE BC surcharge, mid-month</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <div class="scroller">
+          <table id="changeTable">
+            <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, Vancouver, month before</th><th>Confirmed through</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </details>
+      <div class="tip" id="trendTip" hidden></div>
+    </div>
+    <p class="source" id="trendSource"></p>
+  </section>
 
   <footer>
     <p id="stamp"></p>
@@ -293,19 +364,308 @@
       ' — ' + (data.ok_count || 0) + ' rates scraped live.';
   }
 
+  //----------------------------------------------------------------------------
+  // Trend: diesel vs ACE surcharge. Two charts on one shared time axis - never one
+  // chart with two y-scales, whose arbitrary alignment would invent a relationship.
+  //----------------------------------------------------------------------------
+
+  var SVGNS = 'http://www.w3.org/2000/svg';
+  var DAY = 864e5;
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  var trendData = null;
+  var trendState = { index: -1 };
+
+  function utc(iso) {
+    var p = iso.split('-');
+    return Date.UTC(+p[0], +p[1] - 1, p.length > 2 ? +p[2] : 1);
+  }
+  function monthLabel(ym, long) {
+    var p = ym.split('-');
+    return MONTHS[+p[1] - 1] + (long ? ' ' + p[0] : '');
+  }
+  function el(name, attrs, parent) {
+    var n = document.createElementNS(SVGNS, name);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  }
+  function niceTicks(min, max, count) {
+    if (min === max) { min -= 1; max += 1; }
+    var raw = (max - min) / count;
+    var step = Math.pow(10, Math.floor(Math.log(raw) / Math.LN10));
+    var err = raw / step;
+    step *= err >= 7.5 ? 10 : err >= 3.5 ? 5 : err >= 1.5 ? 2 : 1;
+    var lo = Math.floor(min / step) * step, hi = Math.ceil(max / step) * step, out = [];
+    for (var v = lo; v <= hi + step / 1e6; v += step) out.push(Math.round(v * 1e6) / 1e6);
+    return out;
+  }
+
+  // Shared geometry for both charts.
+  function frame(host) {
+    var W = Math.max(300, Math.round(host.clientWidth || 600));
+    var narrow = W < 520;
+    return {
+      W: W, narrow: narrow,
+      padL: 38, padR: narrow ? 52 : 60, top: 14, plotH: narrow ? 120 : 150, axisH: 24,
+      x0: utc(trendData.window.from), x1: utc(trendData.window.to)
+    };
+  }
+  function xOf(f, ms) { return f.padL + (ms - f.x0) / (f.x1 - f.x0) * (f.W - f.padL - f.padR); }
+
+  function drawGrid(svg, f, ticks, fmt) {
+    var t0 = ticks[0], tN = ticks[ticks.length - 1];
+    var y = function (v) { return f.top + (1 - (v - t0) / (tN - t0)) * f.plotH; };
+    ticks.forEach(function (v) {
+      el('line', { x1: f.padL, x2: f.W - f.padR, y1: y(v), y2: y(v), stroke: 'var(--grid)', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+      var tx = el('text', { x: f.padL - 8, y: y(v) + 4, 'text-anchor': 'end', 'class': 'tick' }, svg);
+      tx.textContent = fmt(v);
+    });
+    return y;
+  }
+
+  function drawMonthAxis(svg, f) {
+    var base = f.top + f.plotH;
+    el('line', { x1: f.padL, x2: f.W - f.padR, y1: base, y2: base, stroke: 'var(--border)', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    var months = trendData.months, stepEvery = f.narrow ? 2 : 1;
+    months.forEach(function (m, i) {
+      if (i % stepEvery) return;
+      var x = xOf(f, utc(m.month + '-15'));
+      var first = i === 0 || m.month.slice(5) === '01';
+      var t = el('text', { x: x, y: base + 17, 'text-anchor': 'middle', 'class': 'tick' }, svg);
+      t.textContent = monthLabel(m.month) + (first ? " '" + m.month.slice(2, 4) : '');
+    });
+  }
+
+  function makeSvg(host, f, withAxis) {
+    host.textContent = '';
+    var H = f.top + f.plotH + (withAxis ? f.axisH : 8);
+    var svg = el('svg', { viewBox: '0 0 ' + f.W + ' ' + H, width: f.W, height: H, tabindex: 0, role: 'img' }, host);
+    return svg;
+  }
+
+  function endDot(svg, x, y) {
+    el('circle', { cx: x, cy: y, r: 4, fill: 'var(--series-1)', stroke: 'var(--surface)', 'stroke-width': 2 }, svg);
+  }
+
+  function drawDiesel() {
+    var host = document.getElementById('chartDiesel'), f = frame(host);
+    var svg = makeSvg(host, f, false);
+    svg.setAttribute('aria-label', 'Vancouver diesel price by month; values are in the table below.');
+    var pts = trendData.months.filter(function (m) { return m.vancouver != null; });
+    var vals = pts.map(function (m) { return m.vancouver; });
+    var ticks = niceTicks(Math.min.apply(null, vals), Math.max.apply(null, vals), 3);
+    var y = drawGrid(svg, f, ticks, function (v) { return v + '¢'; });
+
+    var d = pts.map(function (m, i) { return (i ? 'L' : 'M') + xOf(f, utc(m.month + '-15')).toFixed(1) + ' ' + y(m.vancouver).toFixed(1); }).join(' ');
+    el('path', { d: d, fill: 'none', stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+
+    var last = pts[pts.length - 1], lx = xOf(f, utc(last.month + '-15')), ly = y(last.vancouver);
+    endDot(svg, lx, ly);
+    el('text', { x: lx + 9, y: ly + 4, 'class': 'endlabel' }, svg).textContent = last.vancouver.toFixed(1) + '¢';
+
+    return { svg: svg, f: f, y: y };
+  }
+
+  function drawAce() {
+    var host = document.getElementById('chartAce'), f = frame(host);
+    var svg = makeSvg(host, f, true);
+    svg.setAttribute('aria-label', "ACE Courier's British Columbia fuel surcharge over time; values are in the table below.");
+
+    // Clip confirmed spans to the window.
+    var segs = trendData.ace_segments.map(function (s) {
+      return { from: Math.max(utc(s.from), f.x0), to: Math.min(utc(s.to), f.x1), start: utc(s.from), bc: s.bc };
+    }).filter(function (s) { return s.to >= f.x0 && s.from <= f.x1; });
+
+    var vals = segs.map(function (s) { return s.bc; });
+    var ticks = niceTicks(Math.min.apply(null, vals), Math.max.apply(null, vals), 3);
+    var y = drawGrid(svg, f, ticks, function (v) { return v + '%'; });
+
+    segs.forEach(function (s, i) {
+      var xa = xOf(f, s.from), xb = Math.max(xOf(f, s.to + DAY), xa + 2);
+      el('line', { x1: xa, x2: xb, y1: y(s.bc), y2: y(s.bc), stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linecap': 'round' }, svg);
+
+      var next = segs[i + 1];
+      if (next) {
+        var gap = next.from - s.to;
+        if (gap <= 2 * DAY) {
+          // Contiguous: a riser shows the step change.
+          el('line', { x1: xb, x2: xb, y1: y(s.bc), y2: y(next.bc), stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linecap': 'round' }, svg);
+        } else {
+          var gx0 = xb, gx1 = xOf(f, next.from);
+          if (gx1 - gx0 > 84) {
+            var gl = el('text', { x: (gx0 + gx1) / 2, y: (y(s.bc) + y(next.bc)) / 2 + 4, 'text-anchor': 'middle', 'class': 'gaplabel' }, svg);
+            gl.textContent = 'no record';
+          }
+        }
+      }
+    });
+
+    // Markers at each change that happens inside the window.
+    segs.forEach(function (s) { if (s.start >= f.x0) endDot(svg, xOf(f, s.start), y(s.bc)); });
+
+    var last = segs[segs.length - 1];
+    if (last) {
+      var ex = xOf(f, last.to + DAY), ey = y(last.bc);
+      endDot(svg, ex, ey);
+      el('text', { x: ex + 9, y: ey + 4, 'class': 'endlabel' }, svg).textContent = last.bc.toFixed(1) + '%';
+    }
+
+    drawMonthAxis(svg, f);
+    return { svg: svg, f: f, y: y };
+  }
+
+  var charts = [];
+
+  function showIndex(i, anchorChart, clientX) {
+    var months = trendData.months;
+    if (i < 0 || i >= months.length) return hideTip();
+    trendState.index = i;
+    var m = months[i], ms = utc(m.month + '-15');
+
+    charts.forEach(function (c) {
+      if (!c.cross) c.cross = el('line', { stroke: 'var(--muted)', 'stroke-width': 1, 'shape-rendering': 'crispEdges', 'pointer-events': 'none' }, c.svg);
+      var x = xOf(c.f, ms);
+      c.cross.setAttribute('x1', x); c.cross.setAttribute('x2', x);
+      c.cross.setAttribute('y1', c.f.top); c.cross.setAttribute('y2', c.f.top + c.f.plotH);
+      c.cross.style.display = '';
+    });
+
+    var tip = document.getElementById('trendTip');
+    tip.textContent = '';
+    var head = document.createElement('div'); head.className = 'tip-head'; head.textContent = monthLabel(m.month, true); tip.appendChild(head);
+    function row(value, label) {
+      var r = document.createElement('div'); r.className = 'row';
+      var k = document.createElement('span'); k.className = 'key'; r.appendChild(k);
+      var v = document.createElement('span'); v.className = 'val'; v.textContent = value; r.appendChild(v);
+      var l = document.createElement('span'); l.className = 'lbl'; l.textContent = label; r.appendChild(l);
+      tip.appendChild(r);
+    }
+    row(m.vancouver != null ? m.vancouver.toFixed(1) + '¢/L' : '—', 'Diesel, Vancouver');
+    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge');
+    tip.hidden = false;
+
+    // Position beside the crosshair, inside the card.
+    var card = tip.parentNode.getBoundingClientRect();
+    var svgBox = anchorChart.svg.getBoundingClientRect();
+    var scale = svgBox.width / anchorChart.f.W;
+    var px = svgBox.left - card.left + xOf(anchorChart.f, ms) * scale;
+    var left = px + 14;
+    if (left + tip.offsetWidth > card.width - 8) left = px - tip.offsetWidth - 14;
+    tip.style.left = Math.max(8, left) + 'px';
+    tip.style.top = (svgBox.top - card.top + anchorChart.f.top * scale) + 'px';
+  }
+
+  function hideTip() {
+    document.getElementById('trendTip').hidden = true;
+    charts.forEach(function (c) { if (c.cross) c.cross.style.display = 'none'; });
+  }
+
+  function nearestIndex(c, clientX) {
+    var box = c.svg.getBoundingClientRect();
+    var x = (clientX - box.left) * (c.f.W / box.width);
+    var best = -1, bestD = Infinity;
+    trendData.months.forEach(function (m, i) {
+      var d = Math.abs(xOf(c.f, utc(m.month + '-15')) - x);
+      if (d < bestD) { bestD = d; best = i; }
+    });
+    return best;
+  }
+
+  function wire(c) {
+    c.svg.addEventListener('pointermove', function (e) { showIndex(nearestIndex(c, e.clientX), c); });
+    c.svg.addEventListener('pointerleave', hideTip);
+    c.svg.addEventListener('focus', function () {
+      showIndex(trendState.index >= 0 ? trendState.index : trendData.months.length - 1, c);
+    });
+    c.svg.addEventListener('blur', hideTip);
+    c.svg.addEventListener('keydown', function (e) {
+      var i = trendState.index >= 0 ? trendState.index : trendData.months.length - 1;
+      if (e.key === 'ArrowLeft') { showIndex(Math.max(0, i - 1), c); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { showIndex(Math.min(trendData.months.length - 1, i + 1), c); e.preventDefault(); }
+      if (e.key === 'Escape') hideTip();
+    });
+  }
+
+  function drawTrend() {
+    charts = [drawDiesel(), drawAce()];
+    charts.forEach(wire);
+  }
+
+  function renderTrend(t) {
+    if (!t || !t.months || !t.months.length || !t.ace_segments || !t.ace_segments.length) return;
+    trendData = t;
+    document.getElementById('trend').hidden = false;
+    drawTrend();
+
+    var corr = document.getElementById('corr'), c = t.correlation;
+    corr.textContent = '';
+    if (c && c.r != null) {
+      var strength = Math.abs(c.r) >= 0.8 ? 'closely' : Math.abs(c.r) >= 0.5 ? 'moderately' : 'only loosely';
+      corr.appendChild(document.createTextNode("Across the " + c.n + " surcharge changes on record, ACE's BC surcharge tracked the previous month's Vancouver diesel price " + strength + ' '));
+      var s = document.createElement('strong'); s.textContent = '(correlation ' + c.r.toFixed(2) + ')'; corr.appendChild(s);
+      corr.appendChild(document.createTextNode(c.n < 8 ? '. With this few changes on record, treat it as indicative.' : '.'));
+    }
+
+    var tb = document.querySelector('#trendTable tbody');
+    tb.textContent = '';
+    t.months.forEach(function (m) {
+      var tr = document.createElement('tr');
+      [monthLabel(m.month, true),
+       m.vancouver != null ? m.vancouver.toFixed(1) : '—',
+       m.victoria != null ? m.victoria.toFixed(1) : '—',
+       m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record'
+      ].forEach(function (v, i) {
+        var td = document.createElement('td'); td.textContent = v; if (i) td.className = 'num'; tr.appendChild(td);
+      });
+      tb.appendChild(tr);
+    });
+
+    var byMonth = {};
+    (t.diesel_all || []).forEach(function (m) { byMonth[m.month] = m.vancouver; });
+    var cb = document.querySelector('#changeTable tbody');
+    cb.textContent = '';
+    t.ace_segments.slice().reverse().forEach(function (s) {
+      var d = new Date(utc(s.from)); d.setUTCMonth(d.getUTCMonth() - 1);
+      var prior = d.getUTCFullYear() + '-' + ('0' + (d.getUTCMonth() + 1)).slice(-2);
+      var tr = document.createElement('tr');
+      [fmtDate(s.from), s.bc.toFixed(1) + '%', byMonth[prior] != null ? byMonth[prior].toFixed(1) + '¢' : '—', fmtDate(s.to)]
+        .forEach(function (v, i) {
+          var td = document.createElement('td'); td.textContent = v; if (i === 1 || i === 2) td.className = 'num'; tr.appendChild(td);
+        });
+      cb.appendChild(tr);
+    });
+
+    document.getElementById('trendSource').textContent =
+      'Sources: ' + t.sources.diesel + '; ' + t.sources.ace + '.';
+  }
+
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    if (!trendData) return;
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(function () { hideTip(); drawTrend(); }, 120);
+  });
+
+  function loadScript(src, onload, onerror) {
+    var s = document.createElement('script');
+    s.src = src; s.onload = onload; s.onerror = onerror;
+    document.head.appendChild(s);
+  }
+
   if (INTERNAL) {
     // file:// blocks fetch but not <script src>. data.js is never published, so it is
     // only requested here, off disk.
-    var s = document.createElement('script');
-    s.src = 'data.js';
-    s.onload = function () { render(window.FSC_DATA); };
-    s.onerror = function () { render(null); };
-    document.head.appendChild(s);
+    loadScript('data.js', function () { render(window.FSC_DATA); }, function () { render(null); });
+    loadScript('trend.js', function () { renderTrend(window.FSC_TREND); }, function () { });
   } else {
     fetch('latest.json', { cache: 'no-store' })
       .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
       .then(render)
       .catch(function () { render(null); });
+    fetch('trend.json', { cache: 'no-store' })
+      .then(function (r) { return r.ok ? r.json() : Promise.reject(); })
+      .then(renderTrend)
+      .catch(function () { });
   }
 })();
 </script>

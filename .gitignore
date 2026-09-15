@@ -3,6 +3,7 @@
 data/latest.json
 data/manual.json
 site/data.js
+site/trend.js
 
 # Unattended run logs
 *.log

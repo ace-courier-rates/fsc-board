@@ -1,0 +1,40 @@
+{
+  "_about": "ACE Courier's published fuel surcharge changes. Each entry is confirmed from its effective date through confirmed_through; between entries, the rate is not on record. Get-FuelTrend.ps1 adds new changes from the live scrape and extends confirmed_through for the current rate.",
+  "changes": [
+    {
+      "effective": "2025-02-07",
+      "bc": 32.1,
+      "ab": 26.1,
+      "confirmed_through": "2025-08-01",
+      "source": "https://web.archive.org/web/20250801132456/https://www.acecourier.ca/faq/"
+    },
+    {
+      "effective": "2025-09-26",
+      "bc": 26.9,
+      "ab": 18.2,
+      "confirmed_through": "2025-10-15",
+      "source": "https://web.archive.org/web/20251015202742/https://www.acecourier.ca/faq/"
+    },
+    {
+      "effective": "2026-01-27",
+      "bc": 28.6,
+      "ab": 21.4,
+      "confirmed_through": "2026-02-17",
+      "source": "https://web.archive.org/web/20260217051119/https://www.acecourier.ca/faq/"
+    },
+    {
+      "effective": "2026-06-01",
+      "bc": 42.4,
+      "ab": 29.2,
+      "confirmed_through": "2026-06-08",
+      "source": "https://web.archive.org/web/20260608044504/https://www.acecourier.ca/faq/"
+    },
+    {
+      "effective": "2026-09-01",
+      "bc": 50.5,
+      "ab": 40.1,
+      "confirmed_through": "2026-09-15",
+      "source": "https://www.acecourier.ca/faq/"
+    }
+  ]
+}
