@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-09-15T19:16:15.7549167Z",
-  "generated_date": "2026-09-15",
+  "generated_at": "2026-09-16T13:14:10.3933938Z",
+  "generated_date": "2026-09-16",
   "ace_benchmark": 50.5,
   "ok_count": 12,
   "rates": [
@@ -51,7 +51,7 @@
       "service": "LTL under 10,000 lb",
       "segment": "ltl",
       "percent": 74.9,
-      "effective_from": "2026-09-15",
+      "effective_from": "2026-09-16",
       "effective_to": "",
       "status": "ok",
       "source": "https://www.comoxpacific.com/",
@@ -65,7 +65,7 @@
       "service": "LTL over 10,000 lb",
       "segment": "ltl",
       "percent": 84.9,
-      "effective_from": "2026-09-15",
+      "effective_from": "2026-09-16",
       "effective_to": "",
       "status": "ok",
       "source": "https://www.comoxpacific.com/",
