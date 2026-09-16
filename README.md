@@ -49,10 +49,11 @@ a derived rate for the local view.
   self-service stations, Vancouver and Victoria.
 - **ACE surcharge:** `data/ace-fsc-history.json`. Each change is confirmed from its
   effective date through `confirmed_through`; between entries the rate is not on record
-  and the chart shows a gap. Earlier values come from Internet Archive copies of ACE's
-  FAQ page; new changes are added automatically from the daily scrape.
-- **Correlation:** each surcharge change against the Vancouver diesel price of the month
-  before it took effect.
+  and the chart shows a gap. Loaded from ACE's surcharge schedule; new changes are added
+  automatically from the daily scrape.
+- **Correlation:** ACE's day-weighted average BC surcharge for each month against that
+  month's Vancouver diesel price, over months with ACE's rate on record for at least half
+  the days.
 
 To fill a gap, add the change to `data/ace-fsc-history.json` with its effective date,
 BC and Alberta rates, and the date it was last confirmed.

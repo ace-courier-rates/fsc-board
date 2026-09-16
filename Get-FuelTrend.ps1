@@ -234,7 +234,7 @@ $trend = [pscustomobject]@{
     diesel_all   = $allRowArray
     sources      = [pscustomobject]@{
         diesel = 'Statistics Canada, table 18-10-0001-01'
-        ace    = 'ACE Courier fuel surcharge notices and FAQ page, with earlier rates from Internet Archive copies'
+        ace    = 'ACE Courier fuel surcharge schedule and FAQ page'
     }
 }
 
