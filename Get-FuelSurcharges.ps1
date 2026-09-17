@@ -170,6 +170,27 @@ function New-FscRecord {
     }
 }
 
+# LTL carriers publish two surcharges split at 10,000 lb. The heavier one is their
+# truckload rate (Steele's and Manitoulin label it so), which is why it is compared with
+# ACE's FTL / Direct Drive rate rather than its BC rate.
+$script:SvcLtl = 'LTL, under 10,000 lb'
+$script:SvcTl  = 'Truckload, 10,000 lb and over'
+
+function New-FscWeightPair {
+    param(
+        [string] $Carrier, [double] $Under, [double] $Over, [string] $From, [string] $To,
+        [string] $Status = 'ok', [string] $Source, [string] $Note
+    )
+    New-FscRecord -Carrier $Carrier -Service $script:SvcLtl -Segment 'ltl' -Percent $Under -From $From -To $To -Status $Status -Source $Source -Note $Note
+    New-FscRecord -Carrier $Carrier -Service $script:SvcTl  -Segment 'ltl' -Percent $Over  -From $From -To $To -Status $Status -Source $Source -Note $Note
+}
+
+# "Sept.14 .2026", "Sep 17th, 2026", "September 14, 2026" -> yyyy-MM-dd
+function ConvertFrom-LooseDate {
+    param([string] $Month, [string] $Day, [string] $Year)
+    ConvertTo-IsoDate ('{0} {1}, {2}' -f $Month.Substring(0, 3), [int]$Day, $Year)
+}
+
 function Assert-Match {
     param($Match, [string] $Carrier, [string] $What)
     if (-not $Match.Success) { throw "$Carrier - could not locate $What (page layout may have changed)" }
@@ -193,7 +214,7 @@ function Get-FscAce {
     $from = ConvertTo-IsoDate $m.Groups['d'].Value
 
     New-FscRecord -Carrier 'ACE Courier' -Service 'British Columbia' -Segment 'ace' -Percent ([double]$m.Groups['bc'].Value) -From $from -Source $url
-    New-FscRecord -Carrier 'ACE Courier' -Service 'Alberta'          -Segment 'ace' -Percent ([double]$m.Groups['ab'].Value) -From $from -Source $url
+    # The FAQ also gives an Alberta rate; the board compares BC rates only.
 
     $f = [regex]::Match($t, 'FTL\s*/\s*Direct Drive FSC is\s*(?<v>\d+(?:\.\d+)?)\s*%', $script:RxOpts)
     if ($f.Success) {
@@ -201,30 +222,69 @@ function Get-FscAce {
     }
 }
 
-function Get-FscComoxPacific {
-    $url = 'https://www.comoxpacific.com/'
-    $t   = Get-PageText $url
+# Comox Pacific and Overland West run the same website platform, which shows the current
+# rate and next week's posted rate in a box on the homepage:
+#   "FUEL SURCHARGE (2026-09-17) Under 10,000lbs: 71.9% 10,000lbs & over: 107.6%
+#    As of 2026-09-21 Under 10,000lbs: 76.9% Over 10,000lbs: 115.3%"
+function Get-FscHomepageBox {
+    param([string] $Carrier, [string] $Url)
+    $t = Get-PageText $Url
 
-    # "FUEL SURCHARGE (2026-09-03) Under 10,000lbs: 64.4% Over 10,000lbs: 74.4%"
-    $pattern = 'FUEL SURCHARGE\s*\((?<d>\d{4}-\d{2}-\d{2})\)\s*Under\s*10,?000\s*lbs:\s*(?<u>\d+(?:\.\d+)?)\s*%' +
-               '\s*Over\s*10,?000\s*lbs:\s*(?<o>\d+(?:\.\d+)?)\s*%'
-    $m = [regex]::Match($t, $pattern, $script:RxOpts)
-    Assert-Match $m 'Comox Pacific' 'the homepage fuel surcharge block'
+    $pair = 'Under\s*10,?000\s*lbs:\s*(?<u>\d+(?:\.\d+)?)\s*%\s*' +
+            '(?:Over\s*10,?000\s*lbs|10,?000\s*lbs\s*&\s*over):\s*(?<o>\d+(?:\.\d+)?)\s*%'
 
-    $from = $m.Groups['d'].Value
-    New-FscRecord -Carrier 'Comox Pacific Express' -Service 'LTL under 10,000 lb' -Segment 'ltl' -Percent ([double]$m.Groups['u'].Value) -From $from -Source $url
-    New-FscRecord -Carrier 'Comox Pacific Express' -Service 'LTL over 10,000 lb'  -Segment 'ltl' -Percent ([double]$m.Groups['o'].Value) -From $from -Source $url
+    $m = [regex]::Match($t, 'FUEL SURCHARGE\s*\((?<d>\d{4}-\d{2}-\d{2})\)\s*' + $pair, $script:RxOpts)
+    Assert-Match $m $Carrier 'the homepage fuel surcharge block'
+    New-FscWeightPair -Carrier $Carrier -Under ([double]$m.Groups['u'].Value) -Over ([double]$m.Groups['o'].Value) `
+                      -From $m.Groups['d'].Value -Source $Url
 
-    # Comox posts next week's rate alongside the current one.
-    $nextPattern = 'As of\s*(?<d>\d{4}-\d{2}-\d{2})\s*Under\s*10,?000\s*lbs:\s*(?<u>\d+(?:\.\d+)?)\s*%' +
-                   '\s*Over\s*10,?000\s*lbs:\s*(?<o>\d+(?:\.\d+)?)\s*%'
-    $n = [regex]::Match($t, $nextPattern, $script:RxOpts)
+    $n = [regex]::Match($t, 'As of\s*(?<d>\d{4}-\d{2}-\d{2})\s*' + $pair, $script:RxOpts)
     if ($n.Success) {
-        $nf   = $n.Groups['d'].Value
-        $note = "Announced in advance; takes effect $nf"
-        New-FscRecord -Carrier 'Comox Pacific Express' -Service 'LTL under 10,000 lb' -Segment 'ltl' -Percent ([double]$n.Groups['u'].Value) -From $nf -Status 'upcoming' -Source $url -Note $note
-        New-FscRecord -Carrier 'Comox Pacific Express' -Service 'LTL over 10,000 lb'  -Segment 'ltl' -Percent ([double]$n.Groups['o'].Value) -From $nf -Status 'upcoming' -Source $url -Note $note
+        $nf = $n.Groups['d'].Value
+        New-FscWeightPair -Carrier $Carrier -Under ([double]$n.Groups['u'].Value) -Over ([double]$n.Groups['o'].Value) `
+                          -From $nf -Status 'upcoming' -Source $Url -Note "Announced in advance; takes effect $nf"
     }
+}
+
+function Get-FscComoxPacific { Get-FscHomepageBox -Carrier 'Comox Pacific Express'      -Url 'https://www.comoxpacific.com/' }
+function Get-FscOverlandWest { Get-FscHomepageBox -Carrier 'Overland West Freight Lines' -Url 'https://www.overlandwest.ca/' }
+
+function Get-FscHiWay9 {
+    $url = 'https://hi-way9.com/fuel-surcharge/'
+    $t   = Get-PageText $url
+    # Newest first: "Fuel Surcharge Effective September 14, 2026 57.78% up to 10,000 lbs 88.88% over 10,000 lbs"
+    $m = [regex]::Match($t, 'Effective\s+(?<d>[A-Za-z]+\s+\d{1,2},\s*\d{4})\s*(?<u>\d+(?:\.\d+)?)\s*%\s*up to 10,?000\s*lbs\s*' +
+                            '(?<o>\d+(?:\.\d+)?)\s*%\s*over 10,?000\s*lbs', $script:RxOpts)
+    Assert-Match $m 'Hi-Way 9' 'the latest fuel surcharge entry'
+    New-FscWeightPair -Carrier 'Hi-Way 9 Express' -Under ([double]$m.Groups['u'].Value) -Over ([double]$m.Groups['o'].Value) `
+                      -From (ConvertTo-IsoDate $m.Groups['d'].Value) -Source $url
+}
+
+function Get-FscSteeles {
+    $url = 'https://www.steelesgroup.com/get-a-quote/fuel-surcharge/'
+    $t   = Get-PageText $url
+    # Newest first: "Sept.14 .2026 Less than Truckload (LTL) Shipments 1lbs.-9999Lbs = 52.1%
+    #   Truckload (TL) Shipments 10,000Lbs. or more = 103.1%". The summary box above it has
+    #   no date or '=' signs, so it can't match.
+    $m = [regex]::Match($t, '(?<mon>Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*\.?\s*(?<day>\d{1,2})\s*\.?\s*,?\s*(?<yr>\d{4})\s*' +
+                            'Less than Truckload \(LTL\) Shipments[^=]{0,40}=\s*(?<u>\d+(?:\.\d+)?)\s*%\s*' +
+                            'Truckload \(TL\) Shipments[^=]{0,40}=\s*(?<o>\d+(?:\.\d+)?)\s*%', $script:RxOpts)
+    Assert-Match $m "Steele's" 'the latest weekly fuel surcharge entry'
+    New-FscWeightPair -Carrier "Steele's Transfer" -Under ([double]$m.Groups['u'].Value) -Over ([double]$m.Groups['o'].Value) `
+                      -From (ConvertFrom-LooseDate $m.Groups['mon'].Value $m.Groups['day'].Value $m.Groups['yr'].Value) -Source $url
+}
+
+function Get-FscGrimshaw {
+    $url = 'https://www.grimshaw-trucking.com/news'
+    $t   = Get-PageText $url
+    # "Current FSC - Effective as of Sep 17th, 2026: Shipments weighing less than 10,000 lbs = 59.8 %
+    #   Shipments weighing 10,000 lbs or more = 98.9 %"
+    $m = [regex]::Match($t, 'Current FSC\s*-\s*Effective as of\s*(?<mon>[A-Za-z]{3,9})\s+(?<day>\d{1,2})(?:st|nd|rd|th)?,?\s*(?<yr>\d{4})\s*:\s*' +
+                            'Shipments weighing less than 10,?000 lbs\s*=\s*(?<u>\d+(?:\.\d+)?)\s*%\s*' +
+                            'Shipments weighing 10,?000 lbs or more\s*=\s*(?<o>\d+(?:\.\d+)?)\s*%', $script:RxOpts)
+    Assert-Match $m 'Grimshaw' 'the current fuel surcharge'
+    New-FscWeightPair -Carrier 'Grimshaw Trucking' -Under ([double]$m.Groups['u'].Value) -Over ([double]$m.Groups['o'].Value) `
+                      -From (ConvertFrom-LooseDate $m.Groups['mon'].Value $m.Groups['day'].Value $m.Groups['yr'].Value) -Source $url
 }
 
 #------------------------------------------------------------------------------
@@ -297,6 +357,9 @@ function Get-FscManual {
                              -Percent $pctValue -From $asOf -Status $status -Source ([string]$e.source) -Note $note
         # Dated rates are compared with ACE's rate on the same date, not today's.
         if ($fromReport) { $rec | Add-Member -NotePropertyName 'benchmark_date' -NotePropertyValue $asOf }
+        # "publish": true in manual.json puts this carrier's dated rate on the public board.
+        $publish = ($e.PSObject.Properties.Name -contains 'publish') -and ($e.publish -eq $true)
+        $rec | Add-Member -NotePropertyName 'publish' -NotePropertyValue $publish
         $rec
     }
 }
@@ -322,8 +385,12 @@ $adapters = [ordered]@{
     # Direct competitors only: carriers moving heavy LTL freight in BC/AB. Parcel and
     # courier networks (FedEx, Purolator, Canada Post, Canpar, UPS) were dropped - they
     # don't compete for ACE's freight.
-    'ACE Courier'           = 'Get-FscAce'
-    'Comox Pacific Express' = 'Get-FscComoxPacific'
+    'ACE Courier'                = 'Get-FscAce'
+    'Comox Pacific Express'      = 'Get-FscComoxPacific'
+    'Overland West Freight Lines'= 'Get-FscOverlandWest'
+    'Hi-Way 9 Express'           = 'Get-FscHiWay9'
+    "Steele's Transfer"          = 'Get-FscSteeles'
+    'Grimshaw Trucking'          = 'Get-FscGrimshaw'
 }
 
 # Manual entries first; scraped adapters follow.
@@ -401,6 +468,20 @@ if ($FallbackSnapshot) {
     else {
         Write-Verbose "Fallback snapshot $fbPath not found"
     }
+
+    # Carriers with no scraper here that the other machine publishes as dated "reported"
+    # rates. These carry their own as-of date, so they are used regardless of age.
+    if (Test-Path $fbPath) {
+        $present = @($records | ForEach-Object { $_.carrier } | Select-Object -Unique)
+        foreach ($row in @($fb.rates | Where-Object { $_.status -eq 'reported' -and $present -notcontains $_.carrier })) {
+            $rec = New-FscRecord -Carrier $row.carrier -Service $row.service -Segment $row.segment `
+                                 -Percent ([double]$row.percent) -From $row.effective_from -Status 'reported' `
+                                 -Source $row.source -Note $row.note
+            if ($row.benchmark_date) { $rec | Add-Member -NotePropertyName 'benchmark_date' -NotePropertyValue $row.benchmark_date }
+            $records.Add($rec)
+            Write-Host "$($row.carrier) - reported rate as of $($row.effective_from) from $FallbackSnapshot"
+        }
+    }
 }
 
 # Compare like with like. A competitor's truckload surcharge belongs against ACE's
@@ -475,14 +556,26 @@ $snapshot = [pscustomobject]@{
 
 $json = $snapshot | ConvertTo-Json -Depth 6
 
-# Public snapshot for the hosted site. Allowlist, not blocklist: only live rates the
-# carriers publish themselves, only the fields the page renders, and no maintenance
-# notes, error messages or manually entered (possibly rep-sourced) numbers.
+# Public snapshot for the hosted site. Allowlist, not blocklist: live rates the carriers
+# publish themselves, plus dated rates only for carriers explicitly marked "publish" -
+# only the fields the page renders, and no maintenance notes or error messages.
 $publicStatuses = @('ok', 'upcoming')
 $publicRates = foreach ($r in $rateArray) {
-    if ($publicStatuses -notcontains $r.status) { continue }
+    $status = $r.status
     $publicNote = $null
-    if ($r.status -eq 'upcoming') { $publicNote = "Announced in advance; takes effect $($r.effective_from)" }
+    $benchDate  = $null
+
+    $isPublishedManual = ($r.PSObject.Properties.Name -contains 'publish') -and $r.publish -and
+                         ($status -eq 'manual' -or $status -eq 'stale') -and $r.percent -gt 0 -and $r.effective_from
+    if ($isPublishedManual -or $status -eq 'reported') {
+        $status = 'reported'
+        $shown  = Get-Date ([datetime]::ParseExact($r.effective_from, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture)) -Format 'MMM d, yyyy'
+        $publicNote = "Rate as of $shown; this carrier doesn't publish its fuel surcharge."
+        if ($r.PSObject.Properties.Name -contains 'benchmark_date') { $benchDate = $r.benchmark_date }
+    }
+    elseif ($publicStatuses -notcontains $status) { continue }
+    elseif ($status -eq 'upcoming') { $publicNote = "Announced in advance; takes effect $($r.effective_from)" }
+
     [pscustomobject]@{
         carrier        = $r.carrier
         service        = $r.service
@@ -490,12 +583,13 @@ $publicRates = foreach ($r in $rateArray) {
         percent        = $r.percent
         effective_from = $r.effective_from
         effective_to   = $r.effective_to
-        status         = $r.status
+        status         = $status
         source         = $r.source
         note           = $publicNote
         delta_points   = $r.delta_points
         delta_percent  = $r.delta_percent
         benchmark      = $r.benchmark
+        benchmark_date = $benchDate
     }
 }
 [object[]] $publicRateArray = @($publicRates)

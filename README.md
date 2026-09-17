@@ -23,15 +23,22 @@ that reject PowerShell's own web requests. No other dependencies.
 | Carrier | Services tracked | Source |
 |---|---|---|
 | **ACE Courier** | BC, Alberta, FTL / Direct Drive | Public FAQ page |
-| **Comox Pacific Express** | LTL under / over 10,000 lb | Homepage, including next week's posted rate |
+| **Comox Pacific Express** | Under / 10,000 lb and over | Homepage, including next week's posted rate |
+| **Overland West Freight Lines** | Under / 10,000 lb and over | Homepage, including next week's posted rate |
+| **Hi-Way 9 Express** | Under / 10,000 lb and over | Fuel surcharge page |
+| **Steele's Transfer** | Under / 10,000 lb and over | Fuel surcharge page |
+| **Grimshaw Trucking** | Under / 10,000 lb and over | Fuel surcharge updates page |
 
-The board covers direct competitors for heavy LTL freight in BC and Alberta. Parcel and
-courier networks are deliberately left out.
+The board covers direct competitors for heavy LTL freight, compared on BC rates. Parcel
+and courier networks are deliberately left out. Each carrier's 10,000 lb-and-over rate is
+its truckload rate, so it is compared with ACE's FTL / Direct Drive rate; the lighter rate
+is compared with ACE's BC rate.
 
-Competitors that don't publish a machine-readable rate (Van-Kam, Bandstra, Clark) are
-tracked locally in `data/manual.json` and `data/competitor-reports.json`. A dated rate is
-compared with ACE's BC surcharge on the same date. Both files are gitignored and never
-published, so these carriers appear only when the dashboard is opened from disk.
+Competitors without a scrapable rate (Van-Kam, Bandstra, Manitoulin, Rosenau, Clark) are
+tracked in the local, gitignored `data/manual.json` and `data/competitor-reports.json`.
+A dated rate is compared with ACE's BC surcharge on the same date. Carriers marked
+`"publish": true` in `manual.json` also appear on the public board as **reported**, with
+their as-of date; the rest stay local.
 
 ---
 

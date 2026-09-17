@@ -99,6 +99,7 @@
   .badge.ok          { color: var(--win);  background: var(--win-soft); }
   .badge.upcoming    { color: var(--ace);  background: var(--ace-soft); }
   .badge.stale,
+  .badge.reported,
   .badge.derived     { color: var(--warn); background: var(--warn-soft); }
   .badge.unavailable { color: var(--faint); background: var(--bg); border: 1px solid var(--border); }
   .badge.error       { color: var(--lose); background: var(--lose-soft); }
@@ -227,7 +228,9 @@
   // Opened straight off disk it reads the full local data.js instead, which also
   // carries the carriers with no published rate and the scraper's notes.
   var INTERNAL = location.protocol === 'file:';
-  var PUBLIC_STATUSES = { ok: 1, upcoming: 1 };
+  // "reported" = a dated rate for a carrier that doesn't publish one; the public snapshot
+  // only contains these for carriers deliberately marked for publication.
+  var PUBLIC_STATUSES = { ok: 1, upcoming: 1, reported: 1 };
 
   var GROUPS = [
     { key: 'ace',     title: 'ACE Courier' },
@@ -299,7 +302,7 @@
       if (!rows.length) return;
 
       // Live rates first, then upcoming/derived, then anything we couldn't get.
-      var rank = { ok: 0, upcoming: 1, derived: 2, manual: 3, stale: 4, unavailable: 5, error: 6 };
+      var rank = { ok: 0, upcoming: 1, reported: 2, derived: 3, manual: 4, stale: 5, unavailable: 6, error: 7 };
       // NB: `rank[s] || 9` would map ok's rank of 0 to 9 - check for undefined instead.
       function rankOf(s) { return rank[s] === undefined ? 9 : rank[s]; }
       rows.sort(function (a, b) {
@@ -349,7 +352,7 @@
         html += '<tr class="' + cls + '">' +
           '<td><div class="carrier">' + name + '</div>' +
               '<div class="service">' + esc(r.service) + '</div>' +
-              (r.note && (INTERNAL || r.status === 'upcoming') ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</td>' +
+              (r.note && (INTERNAL || r.status === 'upcoming' || r.status === 'reported') ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</td>' +
           '<td class="num">' + pct + '</td>' +
           '<td class="num">' + delta + '</td>' +
           '<td class="date">' + when + '</td>' +
