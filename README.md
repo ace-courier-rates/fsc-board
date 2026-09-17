@@ -46,15 +46,16 @@ their as-of date; the rest stay local.
 
 `Get-FuelTrend.ps1` builds the 12-month chart below the rate tables:
 
-- **Diesel:** Statistics Canada table 18-10-0001-01, monthly average retail price at
-  self-service stations, Vancouver and Victoria.
+- **Diesel:** Natural Resources Canada weekly average retail diesel prices (taxes
+  included). The BC figure is the average of the seven BC cities NRCan surveys:
+  Abbotsford, Fort St. John, Kamloops, Kelowna, Prince George, Vancouver and Victoria.
 - **ACE surcharge:** `data/ace-fsc-history.json`. Each change is confirmed from its
   effective date through `confirmed_through`; between entries the rate is not on record
   and the chart shows a gap. Loaded from ACE's surcharge schedule; new changes are added
   automatically from the daily scrape.
-- **Correlation:** ACE's day-weighted average BC surcharge for each month against that
-  month's Vancouver diesel price, over months with ACE's rate on record for at least half
-  the days.
+- **Correlation:** ACE's day-weighted average BC surcharge for each week against that
+  week's BC diesel price, over weeks with ACE's rate on record for at least four days.
+  Both series are weekly, which matches how often ACE changes its surcharge.
 
 To fill a gap, add the change to `data/ace-fsc-history.json` with its effective date,
 BC and Alberta rates, and the date it was last confirmed.

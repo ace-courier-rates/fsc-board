@@ -186,8 +186,8 @@
     <h2>Diesel prices and ACE's fuel surcharge &mdash; last 12 months</h2>
     <div class="card chart-card">
       <div class="chart-block">
-        <div class="chart-title">Diesel, Vancouver</div>
-        <div class="chart-sub">Monthly average retail price at self-service stations, cents per litre</div>
+        <div class="chart-title">Diesel, British Columbia</div>
+        <div class="chart-sub">Weekly average retail price across the seven BC cities Natural Resources Canada surveys, cents per litre, taxes included</div>
         <div class="chart" id="chartDiesel"></div>
       </div>
       <div class="chart-block">
@@ -200,13 +200,13 @@
         <summary>Show as table</summary>
         <div class="scroller">
           <table id="trendTable">
-            <thead><tr><th>Month</th><th class="num">Diesel, Vancouver (&cent;/L)</th><th class="num">Diesel, Victoria (&cent;/L)</th><th class="num">ACE BC surcharge, month average</th></tr></thead>
+            <thead><tr><th>Week ending</th><th class="num">Diesel, BC (&cent;/L)</th><th class="num">ACE BC surcharge, week average</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
         <div class="scroller">
           <table id="changeTable">
-            <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, Vancouver, that month</th><th>Confirmed through</th></tr></thead>
+            <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, BC, that week</th><th>Confirmed through</th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -431,16 +431,29 @@
     return y;
   }
 
+  // Weekly points, but a tick per month - one label per week would be unreadable.
   function drawMonthAxis(svg, f) {
     var base = f.top + f.plotH;
     el('line', { x1: f.padL, x2: f.W - f.padR, y1: base, y2: base, stroke: 'var(--border)', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
-    var months = trendData.months, stepEvery = f.narrow ? 2 : 1;
-    months.forEach(function (m, i) {
+
+    var seen = {}, labels = [];
+    trendData.points.forEach(function (p) {
+      var ym = p.date.slice(0, 7);
+      if (seen[ym]) return;
+      seen[ym] = 1;
+      labels.push({ ym: ym, ms: utc(p.date) });
+    });
+
+    // Skip any label that would sit on top of the previous one - the first month's label
+    // starts mid-month, so it can crowd the next one.
+    var stepEvery = f.narrow ? 2 : 1, lastX = -Infinity;
+    labels.forEach(function (l, i) {
       if (i % stepEvery) return;
-      var x = xOf(f, utc(m.month + '-15'));
-      var first = i === 0 || m.month.slice(5) === '01';
+      var x = xOf(f, l.ms), withYear = i === 0 || l.ym.slice(5) === '01';
+      if (x - lastX < (withYear ? 44 : 30)) return;
+      lastX = x;
       var t = el('text', { x: x, y: base + 17, 'text-anchor': 'middle', 'class': 'tick' }, svg);
-      t.textContent = monthLabel(m.month) + (first ? " '" + m.month.slice(2, 4) : '');
+      t.textContent = monthLabel(l.ym) + (withYear ? " '" + l.ym.slice(2, 4) : '');
     });
   }
 
@@ -458,18 +471,18 @@
   function drawDiesel() {
     var host = document.getElementById('chartDiesel'), f = frame(host);
     var svg = makeSvg(host, f, false);
-    svg.setAttribute('aria-label', 'Vancouver diesel price by month; values are in the table below.');
-    var pts = trendData.months.filter(function (m) { return m.vancouver != null; });
-    var vals = pts.map(function (m) { return m.vancouver; });
+    svg.setAttribute('aria-label', 'BC diesel price by week; values are in the table below.');
+    var pts = trendData.points.filter(function (p) { return p.diesel != null; });
+    var vals = pts.map(function (p) { return p.diesel; });
     var ticks = niceTicks(Math.min.apply(null, vals), Math.max.apply(null, vals), 3);
     var y = drawGrid(svg, f, ticks, function (v) { return v + '¢'; });
 
-    var d = pts.map(function (m, i) { return (i ? 'L' : 'M') + xOf(f, utc(m.month + '-15')).toFixed(1) + ' ' + y(m.vancouver).toFixed(1); }).join(' ');
+    var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + xOf(f, utc(p.date)).toFixed(1) + ' ' + y(p.diesel).toFixed(1); }).join(' ');
     el('path', { d: d, fill: 'none', stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
 
-    var last = pts[pts.length - 1], lx = xOf(f, utc(last.month + '-15')), ly = y(last.vancouver);
+    var last = pts[pts.length - 1], lx = xOf(f, utc(last.date)), ly = y(last.diesel);
     endDot(svg, lx, ly);
-    el('text', { x: lx + 9, y: ly + 4, 'class': 'endlabel' }, svg).textContent = last.vancouver.toFixed(1) + '¢';
+    el('text', { x: lx + 9, y: ly + 4, 'class': 'endlabel' }, svg).textContent = last.diesel.toFixed(1) + '¢';
 
     return { svg: svg, f: f, y: y };
   }
@@ -530,10 +543,10 @@
   var charts = [];
 
   function showIndex(i, anchorChart, clientX) {
-    var months = trendData.months;
-    if (i < 0 || i >= months.length) return hideTip();
+    var pts = trendData.points;
+    if (i < 0 || i >= pts.length) return hideTip();
     trendState.index = i;
-    var m = months[i], ms = utc(m.month + '-15');
+    var m = pts[i], ms = utc(m.date);
 
     charts.forEach(function (c) {
       if (!c.cross) c.cross = el('line', { stroke: 'var(--muted)', 'stroke-width': 1, 'shape-rendering': 'crispEdges', 'pointer-events': 'none' }, c.svg);
@@ -545,7 +558,7 @@
 
     var tip = document.getElementById('trendTip');
     tip.textContent = '';
-    var head = document.createElement('div'); head.className = 'tip-head'; head.textContent = monthLabel(m.month, true); tip.appendChild(head);
+    var head = document.createElement('div'); head.className = 'tip-head'; head.textContent = 'Week ending ' + fmtDate(m.date); tip.appendChild(head);
     function row(value, label) {
       var r = document.createElement('div'); r.className = 'row';
       var k = document.createElement('span'); k.className = 'key'; r.appendChild(k);
@@ -553,8 +566,8 @@
       var l = document.createElement('span'); l.className = 'lbl'; l.textContent = label; r.appendChild(l);
       tip.appendChild(r);
     }
-    row(m.vancouver != null ? m.vancouver.toFixed(1) + '¢/L' : '—', 'Diesel, Vancouver');
-    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge, month avg');
+    row(m.diesel != null ? m.diesel.toFixed(1) + '¢/L' : '—', 'Diesel, BC average');
+    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge, week avg');
     tip.hidden = false;
 
     // Position beside the crosshair, inside the card.
@@ -577,8 +590,8 @@
     var box = c.svg.getBoundingClientRect();
     var x = (clientX - box.left) * (c.f.W / box.width);
     var best = -1, bestD = Infinity;
-    trendData.months.forEach(function (m, i) {
-      var d = Math.abs(xOf(c.f, utc(m.month + '-15')) - x);
+    trendData.points.forEach(function (p, i) {
+      var d = Math.abs(xOf(c.f, utc(p.date)) - x);
       if (d < bestD) { bestD = d; best = i; }
     });
     return best;
@@ -588,13 +601,13 @@
     c.svg.addEventListener('pointermove', function (e) { showIndex(nearestIndex(c, e.clientX), c); });
     c.svg.addEventListener('pointerleave', hideTip);
     c.svg.addEventListener('focus', function () {
-      showIndex(trendState.index >= 0 ? trendState.index : trendData.months.length - 1, c);
+      showIndex(trendState.index >= 0 ? trendState.index : trendData.points.length - 1, c);
     });
     c.svg.addEventListener('blur', hideTip);
     c.svg.addEventListener('keydown', function (e) {
-      var i = trendState.index >= 0 ? trendState.index : trendData.months.length - 1;
+      var i = trendState.index >= 0 ? trendState.index : trendData.points.length - 1;
       if (e.key === 'ArrowLeft') { showIndex(Math.max(0, i - 1), c); e.preventDefault(); }
-      if (e.key === 'ArrowRight') { showIndex(Math.min(trendData.months.length - 1, i + 1), c); e.preventDefault(); }
+      if (e.key === 'ArrowRight') { showIndex(Math.min(trendData.points.length - 1, i + 1), c); e.preventDefault(); }
       if (e.key === 'Escape') hideTip();
     });
   }
@@ -605,7 +618,7 @@
   }
 
   function renderTrend(t) {
-    if (!t || !t.months || !t.months.length || !t.ace_segments || !t.ace_segments.length) return;
+    if (!t || !t.points || !t.points.length || !t.ace_segments || !t.ace_segments.length) return;
     trendData = t;
     document.getElementById('trend').hidden = false;
     drawTrend();
@@ -614,34 +627,37 @@
     corr.textContent = '';
     if (c && c.r != null) {
       var strength = Math.abs(c.r) >= 0.8 ? 'closely' : Math.abs(c.r) >= 0.5 ? 'moderately' : 'only loosely';
-      var since = c.from ? ' since ' + monthLabel(c.from, true) : '';
-      corr.appendChild(document.createTextNode("Across the " + c.n + " months" + since + " with ACE's rate on record, ACE's average BC surcharge moved " + strength + " with that month's Vancouver diesel price "));
+      var since = c.from ? ' since ' + fmtDate(c.from) : '';
+      corr.appendChild(document.createTextNode("Across the " + c.n + " weeks" + since + " with ACE's rate on record, ACE's average BC surcharge moved " + strength + " with that week's BC diesel price "));
       var s = document.createElement('strong'); s.textContent = '(correlation ' + c.r.toFixed(2) + ')'; corr.appendChild(s);
-      corr.appendChild(document.createTextNode(c.n < 8 ? '. With this few months on record, treat it as indicative.' : '.'));
+      corr.appendChild(document.createTextNode(c.n < 8 ? '. With this few weeks on record, treat it as indicative.' : '.'));
     }
 
     var tb = document.querySelector('#trendTable tbody');
     tb.textContent = '';
-    t.months.forEach(function (m) {
+    t.points.slice().reverse().forEach(function (p) {
       var tr = document.createElement('tr');
-      [monthLabel(m.month, true),
-       m.vancouver != null ? m.vancouver.toFixed(1) : '—',
-       m.victoria != null ? m.victoria.toFixed(1) : '—',
-       m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record'
+      [fmtDate(p.date),
+       p.diesel != null ? p.diesel.toFixed(1) : '—',
+       p.ace_bc != null ? p.ace_bc.toFixed(1) + '%' : 'no record'
       ].forEach(function (v, i) {
         var td = document.createElement('td'); td.textContent = v; if (i) td.className = 'num'; tr.appendChild(td);
       });
       tb.appendChild(tr);
     });
 
-    var byMonth = {};
-    (t.diesel_all || []).forEach(function (m) { byMonth[m.month] = m.vancouver; });
+    // Diesel for a change's own week: the first week ending on or after it took effect.
+    var weeks = (t.diesel_all || []).slice().sort(function (a, b) { return a.date < b.date ? -1 : 1; });
+    function dieselForDate(iso) {
+      for (var i = 0; i < weeks.length; i++) { if (weeks[i].date >= iso) return weeks[i].diesel; }
+      return null;
+    }
     var cb = document.querySelector('#changeTable tbody');
     cb.textContent = '';
     t.ace_segments.slice().reverse().forEach(function (s) {
-      var ym = s.from.slice(0, 7);
+      var dv = dieselForDate(s.from);
       var tr = document.createElement('tr');
-      [fmtDate(s.from), s.bc.toFixed(1) + '%', byMonth[ym] != null ? byMonth[ym].toFixed(1) + '¢' : '—', fmtDate(s.to)]
+      [fmtDate(s.from), s.bc.toFixed(1) + '%', dv != null ? dv.toFixed(1) + '¢' : '—', fmtDate(s.to)]
         .forEach(function (v, i) {
           var td = document.createElement('td'); td.textContent = v; if (i === 1 || i === 2) td.className = 'num'; tr.appendChild(td);
         });

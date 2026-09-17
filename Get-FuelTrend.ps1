@@ -5,8 +5,10 @@
 
 .DESCRIPTION
     Inputs:
-      Statistics Canada table 18-10-0001-01 - monthly average retail price of diesel at
-        self-service stations, Vancouver and Victoria (cents per litre).
+      Natural Resources Canada weekly average retail diesel prices (cents per litre,
+        taxes included) for every BC city NRCan surveys: Abbotsford, Fort St. John,
+        Kamloops, Kelowna, Prince George, Vancouver and Victoria. The BC figure is the
+        average of the cities reporting that week.
       data/ace-fsc-history.json - ACE's published surcharge changes, each confirmed from
         its effective date through confirmed_through.
       data/latest.json - today's scrape; a new ACE rate is added to the history, and the
@@ -15,12 +17,13 @@
     Output: site/trend.json (public) and site/trend.js (the same data for the dashboard
     opened off disk).
 
-    The correlation compares ACE's day-weighted average BC surcharge for each month with
-    that month's Vancouver diesel price, over months where ACE's rate is on record for at
-    least half the days. Months where it isn't are left empty rather than filled in.
+    Both series are weekly, which matches how often ACE changes its surcharge. The
+    correlation compares ACE's day-weighted average BC surcharge for each week with that
+    week's BC diesel price, over weeks where ACE's rate is on record for at least half the
+    days. Weeks where it isn't are left empty rather than filled in.
 
 .PARAMETER Months
-    Diesel months to show. Default 12.
+    Months of history to show. Default 12.
 
 .PARAMETER LocalOnly
     Write only site/trend.js. Leaves the committed history and trend.json untouched, so
@@ -61,7 +64,6 @@ $historyChanged = $false
 if (Test-Path $latestPath) {
     $latest = Get-Content $latestPath -Raw | ConvertFrom-Json
     $bc = $latest.rates | Where-Object { $_.carrier -eq 'ACE Courier' -and $_.service -eq 'British Columbia' -and $_.status -eq 'ok' } | Select-Object -First 1
-    $ab = $latest.rates | Where-Object { $_.carrier -eq 'ACE Courier' -and $_.service -eq 'Alberta' -and $_.status -eq 'ok' } | Select-Object -First 1
 
     if ($bc -and $bc.effective_from) {
         $current = $changes | Where-Object { $_.effective -eq $bc.effective_from } | Select-Object -First 1
@@ -72,12 +74,10 @@ if (Test-Path $latestPath) {
             }
         }
         else {
-            $abPct = $null
-            if ($ab) { $abPct = $ab.percent }
             $changes.Add([pscustomobject]@{
                 effective         = $bc.effective_from
                 bc                = $bc.percent
-                ab                = $abPct
+                ab                = $null
                 confirmed_through = $today
                 source            = 'https://www.acecourier.ca/faq/'
             })
@@ -90,44 +90,63 @@ if (Test-Path $latestPath) {
 [object[]] $sorted = @($changes | Sort-Object { $_.effective })
 
 #------------------------------------------------------------------------------
-# Diesel prices (Statistics Canada)
+# Diesel prices - NRCan weekly averages for BC cities
 #------------------------------------------------------------------------------
 
-$cities = [ordered]@{
-    vancouver = '16.6.0.0.0.0.0.0.0.0'   # Vancouver, diesel at self-service stations
-    victoria  = '17.6.0.0.0.0.0.0.0.0'   # Victoria,  diesel at self-service stations
+# NRCan location IDs for every BC city in the survey.
+$script:BcCities = '2,3,4,5,6,70,90'   # Vancouver, Victoria, Prince George, Kamloops, Kelowna, Fort St. John, Abbotsford
+$script:BcCityNames = 'Abbotsford, Fort St. John, Kamloops, Kelowna, Prince George, Vancouver and Victoria'
+$script:UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
+
+# One year of weekly rows: week-ending date -> average price across the reporting cities.
+function Get-NrcanWeek {
+    param([int] $Year)
+    $url = 'https://www2.nrcan.gc.ca/eneene/sources/pripri/prices_bycity_e.cfm' +
+           "?ProductID=5&locationID=$($script:BcCities)&frequency=W&priceYear=$Year"
+    $resp = Invoke-WebRequest -Uri $url -UseBasicParsing -UserAgent $script:UserAgent -TimeoutSec 60
+    $html = [string]$resp.Content
+
+    $out = @{}
+    foreach ($row in [regex]::Matches($html, '(?is)<tr[^>]*>(.*?)</tr>')) {
+        $cells = $row.Groups[1].Value
+        $d = [regex]::Match($cells, '(?<d>\d{4}-\d{2}-\d{2})')
+        if (-not $d.Success) { continue }
+
+        # Each city contributes four columns; the price column is headers="header4_<n>_1".
+        $prices = foreach ($c in [regex]::Matches($cells, '(?is)<td[^>]*headers="header4_\d+_1[^"]*"[^>]*>(.*?)</td>')) {
+            $v = ([regex]::Replace($c.Groups[1].Value, '<[^>]+>', '')).Trim()
+            if ($v -match '^\d+(\.\d+)?$') { [double]$v }
+        }
+        [object[]] $vals = @($prices)
+        if ($vals.Count -eq 0) { continue }   # future or blank week
+        $out[$d.Groups['d'].Value] = [pscustomobject]@{
+            price  = [math]::Round(($vals | Measure-Object -Average).Average, 1)
+            cities = $vals.Count
+        }
+    }
+    if ($out.Count -eq 0) { throw "NRCan returned no weekly rows for $Year" }
+    return $out
 }
 
-$diesel = @{}   # city -> @{ 'yyyy-MM' = cents }
+$diesel = @{}
 try {
-    $requests = @(foreach ($k in $cities.Keys) { @{ productId = 18100001; coordinate = $cities[$k]; latestN = $Months + 12 } })
-    $body     = ConvertTo-Json -InputObject $requests -Compress
-    $resp     = Invoke-RestMethod -Method Post -Uri 'https://www150.statcan.gc.ca/t1/wds/rest/getDataFromCubePidCoordAndLatestNPeriods' `
-                                  -ContentType 'application/json' -Body $body -TimeoutSec 60
-    $i = 0
-    foreach ($k in $cities.Keys) {
-        $series = @{}
-        foreach ($p in $resp[$i].object.vectorDataPoint) {
-            if ($null -ne $p.value) { $series[$p.refPer.Substring(0, 7)] = [double]$p.value }
-        }
-        if ($series.Count -eq 0) { throw "Statistics Canada returned no data for $k" }
-        $diesel[$k] = $series
-        $i++
+    $years = @($now.Year, $now.AddMonths(-$Months).Year) | Sort-Object -Unique
+    foreach ($y in $years) {
+        foreach ($kv in (Get-NrcanWeek -Year $y).GetEnumerator()) { $diesel[$kv.Key] = $kv.Value }
     }
 }
 catch {
     # Keep the last published prices rather than blanking the chart.
-    Write-Warning "Diesel prices unavailable ($($_.Exception.Message)); reusing previous trend data."
+    Write-Warning "NRCan prices unavailable ($($_.Exception.Message)); reusing previous trend data."
     if (-not (Test-Path $trendPath)) { throw }
-    $prev = Get-Content $trendPath -Raw | ConvertFrom-Json
-    foreach ($k in $cities.Keys) { $diesel[$k] = @{} }
-    foreach ($m in $prev.diesel_all) {
-        foreach ($k in $cities.Keys) { if ($null -ne $m.$k) { $diesel[$k][$m.month] = [double]$m.$k } }
+    foreach ($p in (Get-Content $trendPath -Raw | ConvertFrom-Json).diesel_all) {
+        $diesel[$p.date] = [pscustomobject]@{ price = [double]$p.diesel; cities = $p.cities }
     }
 }
 
-$allMonths = @($diesel['vancouver'].Keys | Sort-Object)
-$shown     = @($allMonths | Select-Object -Last $Months)
+$cutoff   = $now.AddMonths(-$Months).ToString('yyyy-MM-dd')
+$allWeeks = @($diesel.Keys | Sort-Object)
+$shown    = @($allWeeks | Where-Object { [string]::CompareOrdinal($_, $cutoff) -ge 0 -and [string]::CompareOrdinal($_, $today) -le 0 })
 
 #------------------------------------------------------------------------------
 # Combine
@@ -142,55 +161,47 @@ function Get-AceOn {
     return $null
 }
 
-# ACE's day-weighted average BC surcharge for a month - only when its rate is on record
-# for at least half the month's days. Diesel is monthly and ACE changes its rate almost
-# weekly, so a monthly average is the like-for-like comparison.
-function Get-AceMonthAverage {
-    param([string] $Month)
-    $start = [datetime]::ParseExact("$Month-01", 'yyyy-MM-dd', $ci)
-    $end   = $start.AddMonths(1).AddDays(-1)
-    $days  = ($end - $start).Days + 1
+# ACE's day-weighted average for the week ending on $WeekEnding (7 days), when its rate is
+# on record for at least half of them.
+function Get-AceWeekAverage {
+    param([string] $WeekEnding)
+    $end   = ConvertTo-Day $WeekEnding
+    $start = $end.AddDays(-6)
     $sum = 0.0; $covered = 0
     for ($d = $start; $d -le $end; $d = $d.AddDays(1)) {
         $v = Get-AceOn $d
         if ($null -ne $v) { $sum += $v; $covered++ }
     }
-    if ($covered -ge $days / 2) {
-        return [pscustomobject]@{ average = [math]::Round($sum / $covered, 1); covered = $covered; days = $days }
-    }
+    if ($covered -ge 4) { return [pscustomobject]@{ average = [math]::Round($sum / $covered, 1); covered = $covered } }
     return $null
 }
 
-$aceByMonth = @{}
-foreach ($m in $allMonths) {
-    $a = Get-AceMonthAverage $m
-    if ($a) { $aceByMonth[$m] = $a }
+$aceByWeek = @{}
+foreach ($w in $allWeeks) {
+    $a = Get-AceWeekAverage $w
+    if ($a) { $aceByWeek[$w] = $a }
 }
 
-$monthRows = foreach ($m in $shown) {
-    $vic = $null
-    if ($diesel['victoria'].ContainsKey($m)) { $vic = $diesel['victoria'][$m] }
+$points = foreach ($w in $shown) {
     $avg = $null; $cov = $null
-    if ($aceByMonth.ContainsKey($m)) { $avg = $aceByMonth[$m].average; $cov = "$($aceByMonth[$m].covered)/$($aceByMonth[$m].days)" }
+    if ($aceByWeek.ContainsKey($w)) { $avg = $aceByWeek[$w].average; $cov = "$($aceByWeek[$w].covered)/7" }
     [pscustomobject]@{
-        month        = $m
-        vancouver    = $diesel['vancouver'][$m]
-        victoria     = $vic
+        date         = $w
+        diesel       = $diesel[$w].price
+        cities       = $diesel[$w].cities
         ace_bc       = $avg
         ace_coverage = $cov
     }
 }
 
-$allRows = foreach ($m in $allMonths) {
-    $vic = $null
-    if ($diesel['victoria'].ContainsKey($m)) { $vic = $diesel['victoria'][$m] }
-    [pscustomobject]@{ month = $m; vancouver = $diesel['vancouver'][$m]; victoria = $vic }
+$allRows = foreach ($w in $allWeeks) {
+    [pscustomobject]@{ date = $w; diesel = $diesel[$w].price; cities = $diesel[$w].cities }
 }
 
-# Correlate over every month with both a diesel price and ACE's rate on record.
-$pairs = foreach ($m in $allMonths) {
-    if ($aceByMonth.ContainsKey($m)) {
-        [pscustomobject]@{ month = $m; bc = $aceByMonth[$m].average; diesel = $diesel['vancouver'][$m] }
+# Correlate over every week with both a diesel price and ACE's rate on record.
+$pairs = foreach ($w in $shown) {
+    if ($aceByWeek.ContainsKey($w)) {
+        [pscustomobject]@{ date = $w; bc = $aceByWeek[$w].average; diesel = $diesel[$w].price }
     }
 }
 [object[]] $pairArray = @($pairs)
@@ -209,12 +220,7 @@ if ($pairArray.Count -ge 3) {
     if ($sxx -gt 0 -and $syy -gt 0) { $r = [math]::Round($sxy / [math]::Sqrt($sxx * $syy), 2) }
 }
 
-$windowFrom = "$($shown[0])-01"
-$lastMonthEnd = ([datetime]::ParseExact("$($shown[-1])-01", 'yyyy-MM-dd', $ci)).AddMonths(1).AddDays(-1).ToString('yyyy-MM-dd')
-$windowTo = $today
-if ([string]::CompareOrdinal($lastMonthEnd, $today) -gt 0) { $windowTo = $lastMonthEnd }
-
-[object[]] $monthArray   = @($monthRows)
+[object[]] $pointArray   = @($points)
 [object[]] $allRowArray  = @($allRows)
 [object[]] $segmentArray = @($sorted | ForEach-Object {
     [pscustomobject]@{ from = $_.effective; to = $_.confirmed_through; bc = [double]$_.bc }
@@ -222,18 +228,19 @@ if ([string]::CompareOrdinal($lastMonthEnd, $today) -gt 0) { $windowTo = $lastMo
 
 $trend = [pscustomobject]@{
     generated_at = $now.ToString('o')
-    window       = [pscustomobject]@{ from = $windowFrom; to = $windowTo }
-    months       = $monthArray
+    interval     = 'weekly'
+    window       = [pscustomobject]@{ from = $pointArray[0].date; to = $today }
+    points       = $pointArray
     ace_segments = $segmentArray
     correlation  = [pscustomobject]@{
         r     = $r
         n     = $pairArray.Count
-        from  = $(if ($pairArray.Count) { $pairArray[0].month } else { $null })
-        basis = "ACE's average BC surcharge vs the same month's Vancouver diesel price, over months with ACE's rate on record for at least half the month"
+        from  = $(if ($pairArray.Count) { $pairArray[0].date } else { $null })
+        basis = "ACE's average BC surcharge vs the same week's BC diesel price, over weeks with ACE's rate on record for at least four days"
     }
     diesel_all   = $allRowArray
     sources      = [pscustomobject]@{
-        diesel = 'Statistics Canada, table 18-10-0001-01'
+        diesel = "Natural Resources Canada, weekly average retail diesel prices for $($script:BcCityNames)"
         ace    = 'ACE Courier fuel surcharge schedule and FAQ page'
     }
 }
@@ -249,4 +256,5 @@ if (-not $LocalOnly) {
     }
 }
 
-Write-Host ("Trend: {0} months ({1} to {2}), {3} ACE changes, r={4} over {5} months" -f $monthArray.Count, $shown[0], $shown[-1], $sorted.Count, $r, $pairArray.Count)
+Write-Host ("Trend: {0} weeks ({1} to {2}), {3} ACE changes, r={4} over {5} weeks" -f `
+            $pointArray.Count, $pointArray[0].date, $pointArray[-1].date, $sorted.Count, $r, $pairArray.Count)
