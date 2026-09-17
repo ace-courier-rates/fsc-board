@@ -1,235 +1,235 @@
 {
-    "_about":  "ACE Courier\u0027s published fuel surcharge changes. Each entry is confirmed from its effective date through confirmed_through; between entries, the rate is not on record. Get-FuelTrend.ps1 adds new changes from the live scrape and extends confirmed_through for the current rate.",
-    "changes":  [
-                    {
-                        "effective":  "2025-09-01",
-                        "bc":  25.8,
-                        "ab":  null,
-                        "confirmed_through":  "2025-09-08",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2025-09-09",
-                        "bc":  26.9,
-                        "ab":  null,
-                        "confirmed_through":  "2025-10-17",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2025-10-18",
-                        "bc":  28,
-                        "ab":  null,
-                        "confirmed_through":  "2025-10-20",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2025-10-26",
-                        "bc":  27.4,
-                        "ab":  null,
-                        "confirmed_through":  "2025-11-10",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2025-11-11",
-                        "bc":  29.2,
-                        "ab":  null,
-                        "confirmed_through":  "2025-11-26",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2025-11-27",
-                        "bc":  27.4,
-                        "ab":  null,
-                        "confirmed_through":  "2025-12-21",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2025-12-22",
-                        "bc":  24,
-                        "ab":  null,
-                        "confirmed_through":  "2026-01-26",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-01-27",
-                        "bc":  28.6,
-                        "ab":  21.4,
-                        "confirmed_through":  "2026-02-19",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-02-20",
-                        "bc":  30.4,
-                        "ab":  null,
-                        "confirmed_through":  "2026-03-06",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-03-07",
-                        "bc":  39.7,
-                        "ab":  null,
-                        "confirmed_through":  "2026-03-12",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-03-13",
-                        "bc":  43,
-                        "ab":  null,
-                        "confirmed_through":  "2026-03-23",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-03-24",
-                        "bc":  51,
-                        "ab":  null,
-                        "confirmed_through":  "2026-03-28",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-03-29",
-                        "bc":  49.6,
-                        "ab":  null,
-                        "confirmed_through":  "2026-03-30",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-03-31",
-                        "bc":  49.9,
-                        "ab":  null,
-                        "confirmed_through":  "2026-04-20",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-04-21",
-                        "bc":  48.4,
-                        "ab":  null,
-                        "confirmed_through":  "2026-04-22",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-04-23",
-                        "bc":  44.2,
-                        "ab":  null,
-                        "confirmed_through":  "2026-05-02",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-05-03",
-                        "bc":  48.3,
-                        "ab":  null,
-                        "confirmed_through":  "2026-05-05",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-05-06",
-                        "bc":  48.5,
-                        "ab":  null,
-                        "confirmed_through":  "2026-05-11",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-05-12",
-                        "bc":  47.5,
-                        "ab":  38.5,
-                        "ftl":  62.5,
-                        "confirmed_through":  "2026-05-18",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-05-19",
-                        "bc":  45.7,
-                        "ab":  33.7,
-                        "ftl":  60.7,
-                        "confirmed_through":  "2026-05-30",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-06-01",
-                        "bc":  42.4,
-                        "ab":  29.2,
-                        "ftl":  57.4,
-                        "confirmed_through":  "2026-06-07",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-06-08",
-                        "bc":  44.2,
-                        "ab":  31.0,
-                        "ftl":  59.2,
-                        "confirmed_through":  "2026-06-22",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-06-23",
-                        "bc":  39.4,
-                        "ab":  27.4,
-                        "ftl":  54.4,
-                        "confirmed_through":  "2026-07-01",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-07-02",
-                        "bc":  37.9,
-                        "ab":  25.8,
-                        "ftl":  52.9,
-                        "confirmed_through":  "2026-07-07",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-07-08",
-                        "bc":  38.2,
-                        "ab":  25.2,
-                        "ftl":  53.2,
-                        "confirmed_through":  "2026-07-14",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-07-15",
-                        "bc":  40.7,
-                        "ab":  29.0,
-                        "ftl":  55.7,
-                        "confirmed_through":  "2026-07-18",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-07-19",
-                        "bc":  45.8,
-                        "ab":  35.0,
-                        "ftl":  60.8,
-                        "confirmed_through":  "2026-07-25",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-07-26",
-                        "bc":  44.3,
-                        "ab":  35.8,
-                        "ftl":  59.3,
-                        "confirmed_through":  "2026-08-05",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-08-06",
-                        "bc":  47.3,
-                        "ab":  38.0,
-                        "ftl":  62.3,
-                        "confirmed_through":  "2026-08-25",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-08-26",
-                        "bc":  48.8,
-                        "ab":  39.5,
-                        "ftl":  63.8,
-                        "confirmed_through":  "2026-08-31",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    },
-                    {
-                        "effective":  "2026-09-01",
-                        "bc":  50.5,
-                        "ab":  40.1,
-                        "ftl":  65.5,
-                        "confirmed_through":  "2026-09-16",
-                        "source":  "ACE Courier fuel surcharge schedule"
-                    }
-                ]
+  "_about": "ACE Courier's published fuel surcharge changes. Each entry is confirmed from its effective date through confirmed_through; between entries, the rate is not on record. Get-FuelTrend.ps1 adds new changes from the live scrape and extends confirmed_through for the current rate.",
+  "changes": [
+    {
+      "effective": "2025-09-01",
+      "bc": 25.8,
+      "ab": null,
+      "confirmed_through": "2025-09-08",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2025-09-09",
+      "bc": 26.9,
+      "ab": null,
+      "confirmed_through": "2025-10-17",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2025-10-18",
+      "bc": 28,
+      "ab": null,
+      "confirmed_through": "2025-10-20",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2025-10-26",
+      "bc": 27.4,
+      "ab": null,
+      "confirmed_through": "2025-11-10",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2025-11-11",
+      "bc": 29.2,
+      "ab": null,
+      "confirmed_through": "2025-11-26",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2025-11-27",
+      "bc": 27.4,
+      "ab": null,
+      "confirmed_through": "2025-12-21",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2025-12-22",
+      "bc": 24,
+      "ab": null,
+      "confirmed_through": "2026-01-26",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-01-27",
+      "bc": 28.6,
+      "ab": 21.4,
+      "confirmed_through": "2026-02-19",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-02-20",
+      "bc": 30.4,
+      "ab": null,
+      "confirmed_through": "2026-03-06",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-03-07",
+      "bc": 39.7,
+      "ab": null,
+      "confirmed_through": "2026-03-12",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-03-13",
+      "bc": 43,
+      "ab": null,
+      "confirmed_through": "2026-03-23",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-03-24",
+      "bc": 51,
+      "ab": null,
+      "confirmed_through": "2026-03-28",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-03-29",
+      "bc": 49.6,
+      "ab": null,
+      "confirmed_through": "2026-03-30",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-03-31",
+      "bc": 49.9,
+      "ab": null,
+      "confirmed_through": "2026-04-20",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-04-21",
+      "bc": 48.4,
+      "ab": null,
+      "confirmed_through": "2026-04-22",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-04-23",
+      "bc": 44.2,
+      "ab": null,
+      "confirmed_through": "2026-05-02",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-05-03",
+      "bc": 48.3,
+      "ab": null,
+      "confirmed_through": "2026-05-05",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-05-06",
+      "bc": 48.5,
+      "ab": null,
+      "confirmed_through": "2026-05-11",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-05-12",
+      "bc": 47.5,
+      "ab": 38.5,
+      "ftl": 62.5,
+      "confirmed_through": "2026-05-18",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-05-19",
+      "bc": 45.7,
+      "ab": 33.7,
+      "ftl": 60.7,
+      "confirmed_through": "2026-05-30",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-06-01",
+      "bc": 42.4,
+      "ab": 29.2,
+      "ftl": 57.4,
+      "confirmed_through": "2026-06-07",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-06-08",
+      "bc": 44.2,
+      "ab": 31.0,
+      "ftl": 59.2,
+      "confirmed_through": "2026-06-22",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-06-23",
+      "bc": 39.4,
+      "ab": 27.4,
+      "ftl": 54.4,
+      "confirmed_through": "2026-07-01",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-07-02",
+      "bc": 37.9,
+      "ab": 25.8,
+      "ftl": 52.9,
+      "confirmed_through": "2026-07-07",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-07-08",
+      "bc": 38.2,
+      "ab": 25.2,
+      "ftl": 53.2,
+      "confirmed_through": "2026-07-14",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-07-15",
+      "bc": 40.7,
+      "ab": 29.0,
+      "ftl": 55.7,
+      "confirmed_through": "2026-07-18",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-07-19",
+      "bc": 45.8,
+      "ab": 35.0,
+      "ftl": 60.8,
+      "confirmed_through": "2026-07-25",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-07-26",
+      "bc": 44.3,
+      "ab": 35.8,
+      "ftl": 59.3,
+      "confirmed_through": "2026-08-05",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-08-06",
+      "bc": 47.3,
+      "ab": 38.0,
+      "ftl": 62.3,
+      "confirmed_through": "2026-08-25",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-08-26",
+      "bc": 48.8,
+      "ab": 39.5,
+      "ftl": 63.8,
+      "confirmed_through": "2026-08-31",
+      "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-09-01",
+      "bc": 50.5,
+      "ab": 40.1,
+      "ftl": 65.5,
+      "confirmed_through": "2026-09-17",
+      "source": "ACE Courier fuel surcharge schedule"
+    }
+  ]
 }
