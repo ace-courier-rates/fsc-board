@@ -2,7 +2,7 @@
 <#
 .SYNOPSIS
     Daily local run: refresh the board on this PC and publish this PC's public snapshot
-    so the hosted site can use carriers the cloud can't reach (FedEx).
+    so the hosted site can use carriers the cloud can't reach.
 
 .DESCRIPTION
     1. Pulls the latest repo so code changes and cloud data flow down.

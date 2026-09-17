@@ -332,6 +332,10 @@
                   (win ? '+' : '') + r.delta_points.toFixed(1) + ' pt</span>';
           if (r.benchmark && r.benchmark.indexOf('FTL') !== -1) {
             delta += '<div class="note" style="margin-top:4px">vs ACE FTL</div>';
+          } else if (r.benchmark && / on \d{4}-\d{2}-\d{2}$/.test(r.benchmark)) {
+            // Dated competitor rates are compared with ACE's rate on the same date.
+            var onDate = fmtDate(r.benchmark.slice(-10)).replace(/, \d{4}$/, '');
+            delta += '<div class="note" style="margin-top:4px">vs ACE on ' + esc(onDate) + '</div>';
           }
         }
 

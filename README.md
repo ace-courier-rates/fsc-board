@@ -24,20 +24,14 @@ that reject PowerShell's own web requests. No other dependencies.
 |---|---|---|
 | **ACE Courier** | BC, Alberta, FTL / Direct Drive | Public FAQ page |
 | **Comox Pacific Express** | LTL under / over 10,000 lb | Homepage, including next week's posted rate |
-| **Purolator Freight** | Expedited & Standard, LTL and TL | Freight fuel surcharge page |
-| **FedEx** | Express & Ground, intra-Canada | Fuel surcharge tables |
-| **Canada Post** | Domestic parcel | Fuel surcharge page |
 
-Carriers that do not publish a machine-readable rate (for example GLS Canada, which
-renders its rate with JavaScript, and UPS, which blocks automated requests) can be
-tracked locally through `data/manual.json`. Manual entries are never committed or
-published.
+The board covers direct competitors for heavy LTL freight in BC and Alberta. Parcel and
+courier networks are deliberately left out.
 
-### Canpar
-
-Canpar publishes a diesel-price-to-surcharge lookup table rather than the weekly rate.
-Setting `canpar_diesel_price` in the local `data/manual.json` resolves the table into
-a derived rate for the local view.
+Competitors that don't publish a machine-readable rate (Van-Kam, Bandstra, Clark) are
+tracked locally in `data/manual.json` and `data/competitor-reports.json`. A dated rate is
+compared with ACE's BC surcharge on the same date. Both files are gitignored and never
+published, so these carriers appear only when the dashboard is opened from disk.
 
 ---
 
@@ -97,9 +91,9 @@ and also shows carriers with no published rate.
 commits the public snapshot and history, and publishes the dashboard to GitHub Pages.
 Only `site/index.html`, `site/latest.json` and `site/trend.json` are uploaded to Pages.
 
-FedEx blocks GitHub's servers, so the office PC's daily task (`Publish-FscBoard.ps1`)
-publishes `data/local-public.json`, and the cloud run uses its rows for any carrier it
-can't reach while those rates are still in effect.
+If a carrier site blocks GitHub's servers, the office PC's daily task
+(`Publish-FscBoard.ps1`) publishes `data/local-public.json`, and the cloud run uses its
+rows for any carrier it can't reach while those rates are still in effect.
 
 To enable it: **Settings → Pages → Source → GitHub Actions**, then
 **Actions → Fuel surcharge check → Run workflow**.

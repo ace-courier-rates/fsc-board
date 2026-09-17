@@ -14,7 +14,7 @@ on:
       - 'Get-FuelTrend.ps1'
       - 'data/ace-fsc-history.json'
       - '.github/workflows/fsc.yml'
-      # Pushed each morning by the office PC; republish so its FedEx rows go live.
+      # Pushed each morning by the office PC; republish so its rows go live.
       - 'data/local-public.json'
 
 permissions:
@@ -34,7 +34,7 @@ jobs:
 
       - name: Scrape carrier fuel surcharges
         shell: pwsh
-        # FedEx blocks GitHub's servers. For any carrier that fails here, use the rows
+        # Some carrier sites block GitHub's servers. For any carrier that fails here, use the rows
         # the office PC published, as long as those rates are still in effect.
         run: ./Get-FuelSurcharges.ps1 -Verbose -FallbackSnapshot data/local-public.json
 

@@ -30,7 +30,7 @@
 
 .PARAMETER FallbackSnapshot
     A public snapshot (relative to this script) to borrow rows from when a carrier fails
-    to scrape here - used in the cloud, where FedEx blocks requests, with the snapshot
+    to scrape here - used in the cloud, where some carrier sites block requests, with the snapshot
     this PC publishes. Borrowed rows are used only while the rate is still in effect.
 
 .EXAMPLE
@@ -56,7 +56,6 @@ try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::
 $script:UserAgent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36'
 $script:RxOpts    = [Text.RegularExpressions.RegexOptions]::IgnoreCase -bor [Text.RegularExpressions.RegexOptions]::Singleline
 $script:Manual    = $null
-$script:CanparTable = @()
 
 #------------------------------------------------------------------------------
 # Helpers
@@ -228,107 +227,28 @@ function Get-FscComoxPacific {
     }
 }
 
-function Get-FscFedEx {
-    $url = 'https://www.fedex.com/en-ca/shipping/fuel-surcharges.html'
-    $t   = Get-PageText $url
-
-    $targets = @(
-        @{ Label = 'FedEx Express'; Anchor = 'FedEx Express\s+Surcharge';                    Service = 'Express (intra-Canada)' },
-        @{ Label = 'FedEx Ground';  Anchor = 'FedEx Ground and pickup services\s+Surcharge'; Service = 'Ground (intra-Canada)'  }
-    )
-
-    foreach ($x in $targets) {
-        $pattern = $x.Anchor + '.{0,120}?Effective Date\s*(?<intra>\d+(?:\.\d+)?)\s*%\s*(?<intl>\d+(?:\.\d+)?)\s*%\s*' +
-                   '(?<from>[A-Za-z]+ \d{1,2}, \d{4})\s*-\s*(?<to>[A-Za-z]+ \d{1,2}, \d{4})'
-        $m = [regex]::Match($t, $pattern, $script:RxOpts)
-        if (-not $m.Success) {
-            # FedEx serves some networks (e.g. cloud runners) a different page. Say what
-            # arrived so the log shows whether it's a block page, a redirect or a redesign.
-            $title = [regex]::Match($t, '^.{0,160}').Value
-            throw "$($x.Label) - could not locate the current surcharge row (received $($t.Length) chars of text beginning: '$title')"
-        }
-
-        New-FscRecord -Carrier 'FedEx' -Service $x.Service -Percent ([double]$m.Groups['intra'].Value) `
-                      -From (ConvertTo-IsoDate $m.Groups['from'].Value) -To (ConvertTo-IsoDate $m.Groups['to'].Value) -Source $url
-    }
-}
-
-function Get-FscCanadaPost {
-    $url = 'https://www.canadapost-postescanada.ca/cpc/en/support/kb/company-policies/rates-taxes-surcharges/fuel-surcharges-on-mail-and-parcels.page'
-    $t   = Get-PageText $url
-
-    $pattern = '(?<from>[A-Za-z]{3,9} \d{1,2}, \d{4})\s*-\s*(?<to>[A-Za-z]{3,9} \d{1,2}, \d{4})\s*:' +
-               '.{0,300}?Service\s+Percentage\s+Domestic Services\s*(?<dom>\d+(?:\.\d+)?)\s*%'
-    $m = [regex]::Match($t, $pattern, $script:RxOpts)
-    Assert-Match $m 'Canada Post' 'the domestic surcharge row'
-
-    New-FscRecord -Carrier 'Canada Post' -Service 'Domestic parcel' -Percent ([double]$m.Groups['dom'].Value) `
-                  -From (ConvertTo-IsoDate $m.Groups['from'].Value) -To (ConvertTo-IsoDate $m.Groups['to'].Value) -Source $url
-}
-
-function Get-FscPurolatorFreight {
-    $url = 'https://www.purolator.com/en/shipping/freight-fuel-surcharges'
-    $t   = Get-PageText $url
-
-    foreach ($svc in @('Expedited', 'Standard')) {
-        # "Purolator Expedited TM August 31, 2026 - September 6, 2026 47.7% | 99.3%"
-        $pattern = 'Purolator\s+' + $svc + '\s*(?:TM|™)?\s*(?<from>[A-Za-z]+ \d{1,2}, \d{4})\s*-\s*' +
-                   '(?<to>[A-Za-z]+ \d{1,2}, \d{4})\s*(?<ltl>\d+(?:\.\d+)?)\s*%\s*\|\s*(?<tl>\d+(?:\.\d+)?)\s*%'
-        $m = [regex]::Match($t, $pattern, $script:RxOpts)
-        Assert-Match $m "Purolator Freight ($svc)" 'the LTL/TL surcharge row'
-
-        $from = ConvertTo-IsoDate $m.Groups['from'].Value
-        $to   = ConvertTo-IsoDate $m.Groups['to'].Value
-
-        New-FscRecord -Carrier 'Purolator Freight' -Service "$svc LTL" -Segment 'ltl' -Percent ([double]$m.Groups['ltl'].Value) -From $from -To $to -Source $url
-        New-FscRecord -Carrier 'Purolator Freight' -Service "$svc TL"  -Segment 'ltl' -Percent ([double]$m.Groups['tl'].Value)  -From $from -To $to -Source $url
-    }
-}
-
-function Get-FscCanpar {
-    # Canpar publishes the diesel-price -> surcharge lookup table but not the current
-    # rate, which is derived weekly from the Canadian average diesel price. If
-    # manual.json supplies canpar_diesel_price we resolve the table; otherwise we
-    # surface the table's existence and ask for the number.
-    $url  = 'https://www.canpar.com/en/shipping/fuel_surcharge.htm'
-    $html = Get-PageHtml $url
-
-    $rowPattern = "\[\s*'\W?(?<price>\d+\.\d+)'\s*,\s*'(?<pct>[\d.,]+)\s*%'\s*\]"
-    $rows = [regex]::Matches($html, $rowPattern)
-    if ($rows.Count -lt 10) { throw 'Canpar - diesel price lookup table not found' }
-
-    $table = foreach ($r in $rows) {
-        [pscustomobject]@{
-            price   = [double]$r.Groups['price'].Value
-            percent = [double]($r.Groups['pct'].Value -replace ',', '.')
-        }
-    }
-    $script:CanparTable = @($table | Sort-Object price)
-
-    $diesel = $null
-    if ($script:Manual -and ($script:Manual.PSObject.Properties.Name -contains 'canpar_diesel_price')) {
-        $diesel = [double]$script:Manual.canpar_diesel_price
-    }
-
-    if ($diesel -gt 0) {
-        $hit = $script:CanparTable | Where-Object { $_.price -ge $diesel } | Select-Object -First 1
-        if (-not $hit) { $hit = $script:CanparTable[-1] }
-        New-FscRecord -Carrier 'Canpar Express' -Service 'Ground (derived)' -Percent $hit.percent `
-                      -From (Get-Date -Format 'yyyy-MM-dd') -Status 'derived' -Source $url `
-                      -Note ("Derived from Canpar's published table at diesel " + $diesel + "/L. Verify before quoting.")
-    }
-    else {
-        $lo   = $script:CanparTable[0].price
-        $hi   = $script:CanparTable[-1].price
-        $note = 'Canpar publishes only a diesel-price lookup table (' + $script:CanparTable.Count +
-                ' tiers, ' + $lo + '-' + $hi + '/L). Set canpar_diesel_price in data/manual.json to resolve it automatically.'
-        New-FscRecord -Carrier 'Canpar Express' -Service 'Ground' -Percent 0 -Status 'unavailable' -Source $url -Note $note
-    }
-}
-
 #------------------------------------------------------------------------------
 # Manual entries - carriers with no public, machine-readable rate
 #------------------------------------------------------------------------------
+
+# Latest rate for a carrier from ACE's internal competitor comparisons
+# (data/competitor-reports.json, local only - never committed or published).
+function Get-ReportRate {
+    param([string] $Carrier)
+    $path = Join-Path $DataDir 'competitor-reports.json'
+    if (-not (Test-Path $path)) { return $null }
+    $doc = Get-Content $path -Raw | ConvertFrom-Json
+    $best = $null
+    foreach ($rep in @($doc.reports)) {
+        foreach ($row in @($rep.rates)) {
+            if ($row.carrier -ne $Carrier -or $null -eq $row.percent) { continue }
+            if (-not $best -or [string]::CompareOrdinal([string]$rep.date, [string]$best.date) -gt 0) {
+                $best = [pscustomobject]@{ date = [string]$rep.date; percent = [double]$row.percent }
+            }
+        }
+    }
+    return $best
+}
 
 function Get-FscManual {
     $path = Join-Path $DataDir 'manual.json'
@@ -342,8 +262,20 @@ function Get-FscManual {
         $status = 'manual'
         $note   = $e.note
         $asOf   = ConvertTo-IsoDate $e.as_of
+        $pct    = $null
+        if ($null -ne $e.percent -and -not [string]::IsNullOrWhiteSpace([string]$e.percent)) { $pct = [double]$e.percent }
 
-        if ($null -eq $e.percent -or [string]::IsNullOrWhiteSpace([string]$e.percent)) {
+        # A comparison report newer than the manual entry wins.
+        $fromReport = $false
+        $report = Get-ReportRate ([string]$e.carrier)
+        if ($report -and ($null -eq $pct -or -not $asOf -or [string]::CompareOrdinal($report.date, $asOf) -gt 0)) {
+            $pct  = $report.percent
+            $asOf = $report.date
+            $note = "From ACE's competitor comparison of $(Get-Date ([datetime]::ParseExact($asOf, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture)) -Format 'MMM d, yyyy'); compared with ACE's rate on that date."
+            $fromReport = $true
+        }
+
+        if ($null -eq $pct) {
             $status = 'unavailable'
             if (-not $note) { $note = 'No rate on file. Add one in data/manual.json when you learn it.' }
         }
@@ -351,19 +283,35 @@ function Get-FscManual {
             $age = ($today - [datetime]::ParseExact($asOf, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture)).Days
             if ($age -gt $StaleAfterDays) {
                 $status = 'stale'
-                $note   = "Last confirmed $asOf ($age days ago). Re-check before quoting. $note".Trim()
+                $note   = "$age days old. $note".Trim()
             }
         }
-
-        $pct = 0.0
-        if ($e.percent) { $pct = [double]$e.percent }
 
         $seg = 'ltl'
         if ($e.PSObject.Properties.Name -contains 'segment' -and $e.segment) { $seg = [string]$e.segment }
 
-        New-FscRecord -Carrier ([string]$e.carrier) -Service ([string]$e.service) -Segment $seg `
-                      -Percent $pct -From $asOf -Status $status -Source ([string]$e.source) -Note $note
+        $pctValue = 0.0
+        if ($null -ne $pct) { $pctValue = $pct }
+
+        $rec = New-FscRecord -Carrier ([string]$e.carrier) -Service ([string]$e.service) -Segment $seg `
+                             -Percent $pctValue -From $asOf -Status $status -Source ([string]$e.source) -Note $note
+        # Dated rates are compared with ACE's rate on the same date, not today's.
+        if ($fromReport) { $rec | Add-Member -NotePropertyName 'benchmark_date' -NotePropertyValue $asOf }
+        $rec
     }
+}
+
+# ACE's BC surcharge on a given date, from the committed schedule.
+function Get-AceBcOn {
+    param([string] $Date)
+    $path = Join-Path $DataDir 'ace-fsc-history.json'
+    if (-not (Test-Path $path)) { return $null }
+    foreach ($c in @((Get-Content $path -Raw | ConvertFrom-Json).changes)) {
+        if ([string]::CompareOrdinal($Date, [string]$c.effective) -ge 0 -and [string]::CompareOrdinal($Date, [string]$c.confirmed_through) -le 0) {
+            return [double]$c.bc
+        }
+    }
+    return $null
 }
 
 #------------------------------------------------------------------------------
@@ -371,15 +319,14 @@ function Get-FscManual {
 #------------------------------------------------------------------------------
 
 $adapters = [ordered]@{
+    # Direct competitors only: carriers moving heavy LTL freight in BC/AB. Parcel and
+    # courier networks (FedEx, Purolator, Canada Post, Canpar, UPS) were dropped - they
+    # don't compete for ACE's freight.
     'ACE Courier'           = 'Get-FscAce'
     'Comox Pacific Express' = 'Get-FscComoxPacific'
-    'FedEx'                 = 'Get-FscFedEx'
-    'Canada Post'           = 'Get-FscCanadaPost'
-    'Purolator Freight'     = 'Get-FscPurolatorFreight'
-    'Canpar Express'        = 'Get-FscCanpar'
 }
 
-# Manual entries load first so Get-FscCanpar can read canpar_diesel_price.
+# Manual entries first; scraped adapters follow.
 $records = New-Object System.Collections.Generic.List[object]
 $errors  = New-Object System.Collections.Generic.List[object]
 
@@ -478,7 +425,14 @@ foreach ($r in $records) {
     $comparable = ($r.carrier -ne 'ACE Courier') -and ($r.percent -gt 0) -and
                   ($r.status -ne 'error') -and ($r.status -ne 'unavailable')
 
-    if ($comparable) {
+    $benchDate = $null
+    if ($r.PSObject.Properties.Name -contains 'benchmark_date') { $benchDate = $r.benchmark_date }
+
+    if ($comparable -and $benchDate) {
+        $benchPct  = Get-AceBcOn $benchDate
+        $benchName = "ACE British Columbia on $benchDate"
+    }
+    elseif ($comparable) {
         # Truckload / full-load services measure against ACE's FTL rate.
         if ($r.service -match '(^|\s)TL$' -or $r.service -match 'truckload|full[- ]load|FTL') {
             $benchPct  = $aceFtlPct

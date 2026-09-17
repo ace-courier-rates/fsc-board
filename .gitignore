@@ -2,6 +2,7 @@
 # Never committed; the public snapshot is site/latest.json.
 data/latest.json
 data/manual.json
+data/competitor-reports.json
 site/data.js
 site/trend.js
 
