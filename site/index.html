@@ -314,7 +314,8 @@
       });
 
       html += '<section><h2>' + esc(g.title) + '</h2><div class="card"><div class="scroller"><table>' +
-              '<thead><tr><th>Carrier</th><th class="num">FSC</th><th class="num">vs ACE</th>' +
+              // ACE can't be compared with itself, so its own table has no "vs ACE" column.
+              '<thead><tr><th>Carrier</th><th class="num">FSC</th>' + (g.key === 'ace' ? '' : '<th class="num">vs ACE</th>') +
               '<th>Effective</th><th>Status</th></tr></thead><tbody>';
 
       rows.forEach(function (r) {
@@ -354,7 +355,7 @@
               '<div class="service">' + esc(r.service) + '</div>' +
               (r.note && (INTERNAL || r.status === 'upcoming' || r.status === 'reported') ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</td>' +
           '<td class="num">' + pct + '</td>' +
-          '<td class="num">' + delta + '</td>' +
+          (g.key === 'ace' ? '' : '<td class="num">' + delta + '</td>') +
           '<td class="date">' + when + '</td>' +
           '<td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + '</span></td>' +
           '</tr>';
