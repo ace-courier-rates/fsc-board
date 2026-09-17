@@ -40,3 +40,5 @@
 {"carrier":"Comox Pacific Express","service":"LTL under 10,000 lb","segment":"ltl","percent":74.9,"effective_from":"2026-09-17","effective_to":"","status":"ok","recorded_at":"2026-09-17T13:13:52.9059464Z"}
 {"carrier":"Comox Pacific Express","service":"LTL over 10,000 lb","segment":"ltl","percent":84.9,"effective_from":"2026-09-17","effective_to":"","status":"ok","recorded_at":"2026-09-17T13:13:52.9059464Z"}
 {"carrier":"Canada Post","service":"Domestic parcel","segment":"parcel","percent":44.5,"effective_from":"2026-09-21","effective_to":"2026-09-27","status":"ok","recorded_at":"2026-09-17T13:13:52.9059464Z"}
+{"carrier":"Comox Pacific Express","service":"LTL under 10,000 lb","segment":"ltl","percent":79.9,"effective_from":"2026-09-21","effective_to":"","status":"upcoming","recorded_at":"2026-09-17T17:12:43.6292130Z"}
+{"carrier":"Comox Pacific Express","service":"LTL over 10,000 lb","segment":"ltl","percent":89.9,"effective_from":"2026-09-21","effective_to":"","status":"upcoming","recorded_at":"2026-09-17T17:12:43.6292130Z"}
