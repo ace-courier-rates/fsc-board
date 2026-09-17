@@ -570,7 +570,8 @@ $publicRates = foreach ($r in $rateArray) {
     if ($isPublishedManual -or $status -eq 'reported') {
         $status = 'reported'
         $shown  = Get-Date ([datetime]::ParseExact($r.effective_from, 'yyyy-MM-dd', [Globalization.CultureInfo]::InvariantCulture)) -Format 'MMM d, yyyy'
-        $publicNote = "Rate as of $shown; this carrier doesn't publish its fuel surcharge."
+        $publicNote = "Rate as of $shown. This carrier doesn't publish its fuel surcharge, so this figure is likely outdated: " +
+                      "if fuel costs have risen since then, its current rate is likely higher; if they've fallen, likely lower."
         if ($r.PSObject.Properties.Name -contains 'benchmark_date') { $benchDate = $r.benchmark_date }
     }
     elseif ($publicStatuses -notcontains $status) { continue }
