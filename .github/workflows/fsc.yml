@@ -31,6 +31,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          # Runs queue behind each other. Start from the newest main, not the commit that
+          # triggered this run, so a queued run sees what the previous run just committed.
+          ref: main
 
       - name: Scrape carrier fuel surcharges
         shell: pwsh
@@ -53,8 +57,9 @@ jobs:
             echo "No rate changes today."
           else
             git commit -m "FSC update $(date -u +%Y-%m-%d)"
-            # The office PC may have pushed while this ran.
-            git pull --rebase --quiet origin main
+            # The office PC may have pushed while this ran. These files are regenerated in
+            # full every run, so on a conflict this run's fresh copy wins.
+            git pull --rebase --quiet -X theirs origin main
             git push
           fi
 
