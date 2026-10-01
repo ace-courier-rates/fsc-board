@@ -228,8 +228,16 @@
       "bc": 50.5,
       "ab": 40.1,
       "ftl": 65.5,
-      "confirmed_through": "2026-10-01",
+      "confirmed_through": "2026-09-30",
       "source": "ACE Courier fuel surcharge schedule"
+    },
+    {
+      "effective": "2026-10-01",
+      "bc": 48.8,
+      "ab": 46.4,
+      "ftl": 63.8,
+      "confirmed_through": "2026-10-01",
+      "source": "Email: Dwayne Verbin <dverbin@acecourier.ca>, \"FSC\", 2026-10-01"
     }
   ]
 }
