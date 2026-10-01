@@ -68,8 +68,18 @@ if (Test-Path $latestPath) {
     if ($bc -and $bc.effective_from) {
         $current = $changes | Where-Object { $_.effective -eq $bc.effective_from } | Select-Object -First 1
         if ($current) {
-            if ([string]::CompareOrdinal([string]$current.confirmed_through, $today) -lt 0) {
-                $current.confirmed_through = $today
+            # Don't extend past the start of a later change. The FAQ page can lag an
+            # emailed rate by days, and without this the scrape would keep pushing the
+            # superseded rate forward over the top of the newer one.
+            $limit = $today
+            foreach ($c in $changes) {
+                if ([string]::CompareOrdinal([string]$c.effective, [string]$current.effective) -gt 0 -and
+                    [string]::CompareOrdinal([string]$c.effective, $limit) -le 0) {
+                    $limit = (ConvertTo-Day ([string]$c.effective)).AddDays(-1).ToString('yyyy-MM-dd')
+                }
+            }
+            if ([string]::CompareOrdinal([string]$current.confirmed_through, $limit) -lt 0) {
+                $current.confirmed_through = $limit
                 $historyChanged = $true
             }
         }
