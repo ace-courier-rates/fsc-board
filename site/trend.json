@@ -1,18 +1,11 @@
 {
-  "generated_at": "2026-09-30T14:15:59.3876100Z",
+  "generated_at": "2026-10-01T13:17:38.6257860Z",
   "interval": "weekly",
   "window": {
-    "from": "2025-09-30",
-    "to": "2026-09-30"
+    "from": "2025-10-07",
+    "to": "2026-10-01"
   },
   "points": [
-    {
-      "date": "2025-09-30",
-      "diesel": 161.3,
-      "cities": 7,
-      "ace_bc": 26.9,
-      "ace_coverage": "7/7"
-    },
     {
       "date": "2025-10-07",
       "diesel": 162.7,
@@ -531,14 +524,14 @@
     },
     {
       "from": "2026-09-01",
-      "to": "2026-09-30",
+      "to": "2026-10-01",
       "bc": 50.5
     }
   ],
   "correlation": {
     "r": 0.96,
-    "n": 52,
-    "from": "2025-09-30",
+    "n": 51,
+    "from": "2025-10-07",
     "basis": "ACE's average BC surcharge vs the same week's BC diesel price, over weeks with ACE's rate on record for at least four days"
   },
   "diesel_all": [
@@ -995,6 +988,11 @@
     {
       "date": "2026-09-29",
       "diesel": 276.2,
+      "cities": 7
+    },
+    {
+      "date": "2026-10-06",
+      "diesel": 267.5,
       "cities": 7
     }
   ],
