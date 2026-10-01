@@ -62,6 +62,43 @@ BC and Alberta rates, and the date it was last confirmed.
 
 ---
 
+## Rates from email
+
+ACE's own changes reach staff by email days before the public FAQ page is updated, and the
+competitor comparisons are published nowhere else. `Get-FscEmail.ps1` reads both out of
+those emails and writes them to `data/ace-fsc-history.json` and
+`data/competitor-reports.json`, dated by the message.
+
+Two message shapes are understood, both plain prose:
+
+- **A rate change**, sent under the bare subject `FSC`:
+  `BC's FSC is 48.8 % and Alberta's FSC is 46.4 %. Direct Drive/FTL is 63.8 %`
+- **A competitor comparison**, a list of `Carrier - NN.N%` lines. The shorthand each
+  carrier is written under maps to a board name in `$CarrierMap`; a carrier added to the
+  comparison needs an entry there or it will be absent from the report.
+
+Rates are only recorded as a change when the subject is the announcement form. Forwarded
+chains quote earlier announcements below the current text, and reading those would file
+last month's rate under this month's date.
+
+```powershell
+.\Get-FscEmail.ps1 -MsgFolder 'C:\Users\ace\Desktop\FSC Inbox' -DryRun   # parse, write nothing
+.\Get-FscEmail.ps1 -MsgFolder 'C:\Users\ace\Desktop\FSC Inbox'           # write, then archive
+```
+
+Saved `.msg` files are read without Outlook installed, and are moved to `processed\` once
+read so the same rates can't be booked twice. Attachments are named in the output but
+never parsed - a scanned rate sheet is not something to OCR and then quote to a customer.
+
+The script can also read the mailbox directly over EWS (`-SetupCredential`, then no
+`-MsgFolder`), which removes the manual save. That path needs EWS enabled for the account;
+as of 2026-10-01 it returns 401 while OWA and Outlook work, so the folder is the live
+route. The credential is stored DPAPI-encrypted in `data/ews-cred.xml`, readable only by
+the Windows account that created it, and is gitignored along with anything pulled from a
+message.
+
+---
+
 ## How the comparison works
 
 Each rate is measured against the matching ACE rate:

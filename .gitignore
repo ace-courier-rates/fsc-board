@@ -6,6 +6,11 @@ data/competitor-reports.json
 site/data.js
 site/trend.js
 
+# Mailbox credential (DPAPI-encrypted, this machine and account only) and anything
+# pulled off an internal email. Neither ever goes near the repo.
+data/ews-cred.xml
+data/email-attachments/
+
 # Unattended run logs
 *.log
 

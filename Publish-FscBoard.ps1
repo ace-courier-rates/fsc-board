@@ -22,7 +22,8 @@
 #>
 [CmdletBinding()]
 param(
-    [switch] $NoPush
+    [switch] $NoPush,
+    [string] $MsgFolder = (Join-Path ([Environment]::GetFolderPath('Desktop')) 'FSC Inbox')
 )
 
 $ErrorActionPreference = 'Stop'
@@ -51,7 +52,26 @@ $snapshot = 'data/local-public.json'
 $pull = Invoke-Git pull --ff-only --quiet origin main
 if ($pull.ExitCode -ne 0) { Write-RunLog "pull failed, continuing with local copy - $($pull.Output)" }
 
-# 2. Scrape
+# 2. Emailed rates, ahead of the scrape: a new comparison feeds the carriers that have no
+# public page, and a new ACE change has to be on record before the trend is rebuilt.
+$history = 'data/ace-fsc-history.json'
+if (Test-Path -LiteralPath $MsgFolder) {
+    $msgs = @(Get-ChildItem -LiteralPath $MsgFolder -Filter *.msg -File)
+    if ($msgs.Count) {
+        try {
+            $out = & (Join-Path $PSScriptRoot 'Get-FscEmail.ps1') -MsgFolder $MsgFolder
+            foreach ($line in @($out | Where-Object { "$_" -match '->' })) { Write-RunLog ("email: " + "$line".Trim()) }
+            Write-RunLog "read $($msgs.Count) saved message(s) from $MsgFolder"
+        }
+        catch { Write-RunLog "email step failed - $($_.Exception.Message)" }
+    }
+}
+
+# A new rate from email changes a tracked file. Left uncommitted it would block the next
+# --ff-only pull, and the cloud run needs it anyway to redraw the chart.
+$historyDirty = (Invoke-Git status --porcelain -- $history).Output.Trim().Length -gt 0
+
+# 3. Scrape
 & (Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1') -NoHistory -PublicSnapshotPath $snapshot | Out-Null
 
 # Diesel trend for the local dashboard only; the cloud run owns the committed copy.
@@ -84,13 +104,24 @@ if ($committed.ExitCode -eq 0) {
     catch { }
 }
 if (-not $needsPush) {
+    # Drop the regenerated snapshot, which differs by timestamp alone.
     Invoke-Git checkout -- $snapshot | Out-Null
-    Write-RunLog 'rates unchanged since last publish; nothing pushed'
-    return
+    if (-not $historyDirty) {
+        Write-RunLog 'rates unchanged since last publish; nothing pushed'
+        return
+    }
 }
 
-$add    = Invoke-Git add -- $snapshot
-$commit = Invoke-Git commit --quiet -m ("Local snapshot " + (Get-Date -Format 'yyyy-MM-dd')) -- $snapshot
+$files = @()
+if ($needsPush)     { $files += $snapshot }
+if ($historyDirty)  { $files += $history }
+
+$message = if ($historyDirty -and $needsPush) { 'Local snapshot and emailed ACE rate ' }
+           elseif ($historyDirty)             { 'Emailed ACE rate ' }
+           else                               { 'Local snapshot ' }
+
+$add    = Invoke-Git add -- @files
+$commit = Invoke-Git commit --quiet -m ($message + (Get-Date -Format 'yyyy-MM-dd')) -- @files
 if ($commit.ExitCode -ne 0) { Write-RunLog "commit failed - $($commit.Output)"; return }
 
 $push = Invoke-Git push --quiet origin main
@@ -100,5 +131,5 @@ if ($push.ExitCode -ne 0) {
     if ($rebase.ExitCode -eq 0) { $push = Invoke-Git push --quiet origin main }
 }
 
-if ($push.ExitCode -eq 0) { Write-RunLog "pushed $snapshot ($rows rows)" }
+if ($push.ExitCode -eq 0) { Write-RunLog ("pushed " + ($files -join ', ') + " ($rows rows)") }
 else { Write-RunLog "push failed - $($push.Output)" }
