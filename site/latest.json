@@ -1,9 +1,39 @@
 {
-  "generated_at": "2026-10-05T13:18:21.5034160Z",
+  "generated_at": "2026-10-05T14:16:02.0478705Z",
   "generated_date": "2026-10-05",
   "ace_benchmark": 48.8,
   "ok_count": 12,
   "rates": [
+    {
+      "carrier": "ACE Courier",
+      "service": "British Columbia",
+      "segment": "ace",
+      "percent": 48.8,
+      "effective_from": "2026-10-01",
+      "effective_to": "",
+      "status": "ok",
+      "source": "https://www.acecourier.ca/faq/",
+      "note": null,
+      "delta_points": null,
+      "delta_percent": null,
+      "benchmark": null,
+      "benchmark_date": null
+    },
+    {
+      "carrier": "ACE Courier",
+      "service": "FTL / Direct Drive",
+      "segment": "ace",
+      "percent": 63.8,
+      "effective_from": "2026-10-01",
+      "effective_to": "",
+      "status": "ok",
+      "source": "https://www.acecourier.ca/faq/",
+      "note": null,
+      "delta_points": null,
+      "delta_percent": null,
+      "benchmark": null,
+      "benchmark_date": null
+    },
     {
       "carrier": "Comox Pacific Express",
       "service": "LTL, under 10,000 lb",
@@ -152,36 +182,6 @@
       "delta_points": 38.7,
       "delta_percent": 60.7,
       "benchmark": "ACE FTL / Direct Drive",
-      "benchmark_date": null
-    },
-    {
-      "carrier": "ACE Courier",
-      "service": "British Columbia",
-      "segment": "ace",
-      "percent": 48.8,
-      "effective_from": "2026-10-01",
-      "effective_to": "",
-      "status": "ok",
-      "source": "https://www.acecourier.ca/faq/",
-      "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
-      "benchmark_date": null
-    },
-    {
-      "carrier": "ACE Courier",
-      "service": "FTL / Direct Drive",
-      "segment": "ace",
-      "percent": 63.8,
-      "effective_from": "2026-10-01",
-      "effective_to": "",
-      "status": "ok",
-      "source": "https://www.acecourier.ca/faq/",
-      "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
       "benchmark_date": null
     },
     {
