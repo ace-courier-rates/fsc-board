@@ -162,3 +162,7 @@
 {"carrier":"Hi-Way 9 Express","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":89.36,"effective_from":"2026-10-19","effective_to":"","status":"ok","recorded_at":"2026-10-19T19:06:14.2365428Z"}
 {"carrier":"Steele's Transfer","service":"LTL, under 10,000 lb","segment":"ltl","percent":55.0,"effective_from":"2026-10-19","effective_to":"","status":"ok","recorded_at":"2026-10-19T19:06:14.2365428Z"}
 {"carrier":"Steele's Transfer","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":110.0,"effective_from":"2026-10-19","effective_to":"","status":"ok","recorded_at":"2026-10-19T19:06:14.2365428Z"}
+{"carrier":"Comox Pacific Express","service":"LTL, under 10,000 lb","segment":"ltl","percent":78.4,"effective_from":"2026-10-20","effective_to":"","status":"ok","recorded_at":"2026-10-20T17:49:02.7041272Z"}
+{"carrier":"Comox Pacific Express","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":88.4,"effective_from":"2026-10-20","effective_to":"","status":"ok","recorded_at":"2026-10-20T17:49:02.7041272Z"}
+{"carrier":"Overland West Freight Lines","service":"LTL, under 10,000 lb","segment":"ltl","percent":75.4,"effective_from":"2026-10-20","effective_to":"","status":"ok","recorded_at":"2026-10-20T17:49:02.7041272Z"}
+{"carrier":"Overland West Freight Lines","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":113.5,"effective_from":"2026-10-20","effective_to":"","status":"ok","recorded_at":"2026-10-20T17:49:02.7041272Z"}
