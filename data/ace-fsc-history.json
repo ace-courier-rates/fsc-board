@@ -252,6 +252,13 @@
       "ab": null,
       "confirmed_through": "2026-10-21",
       "source": "https://www.acecourier.ca/faq/"
+    },
+    {
+      "effective": "2026-10-22",
+      "bc": 52.4,
+      "ab": null,
+      "confirmed_through": "2026-10-22",
+      "source": "https://www.acecourier.ca/faq/"
     }
   ]
 }
