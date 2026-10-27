@@ -52,9 +52,9 @@ param(
     [int]    $Days = 30,
     [string] $MsgFolder,
     [string] $Folder = 'FSC',
-    [string] $Endpoint       = 'https://mail.acecourier.ca/EWS/Exchange.asmx',
+    [string] $Endpoint,
     [string] $CredentialPath,
-    [string[]] $Senders      = @('dverbin@acecourier.ca', 'jcromwell@acecourier.ca', 'jmcmullin@acecourier.ca')
+    [string[]] $Senders
 )
 
 $ErrorActionPreference = 'Stop'
@@ -65,6 +65,16 @@ $ErrorActionPreference = 'Stop'
 # caller's working directory.
 $ScriptDir      = if ($PSScriptRoot) { $PSScriptRoot } else { Split-Path -Parent $MyInvocation.MyCommand.Path }
 if (-not $CredentialPath) { $CredentialPath = Join-Path $ScriptDir 'data\ews-cred.xml' }
+
+# The mail server and the staff who send FSC notices are internal and this repo is public,
+# so both live in a gitignored file beside the credential:
+#   { "endpoint": "https://<mail server>/EWS/Exchange.asmx", "senders": ["<address>", ...] }
+$EmailConfigPath = Join-Path $ScriptDir 'data\email-config.json'
+if (Test-Path $EmailConfigPath) {
+    $emailConfig = Get-Content $EmailConfigPath -Raw | ConvertFrom-Json
+    if (-not $Endpoint) { $Endpoint = $emailConfig.endpoint }
+    if (-not $Senders)  { $Senders  = @($emailConfig.senders) }
+}
 
 $DataDir        = Join-Path $ScriptDir 'data'
 $AttachmentDir  = Join-Path $DataDir 'email-attachments'
@@ -114,6 +124,9 @@ if ($SetupCredential) {
 }
 
 if (-not $MsgFolder) {
+    if (-not $Endpoint -or -not $Senders) {
+        throw "No mail server or sender list. Put them in $EmailConfigPath (format at the top of this script)."
+    }
     if (-not (Test-Path $CredentialPath)) {
         throw "No saved credential. Run: .\Get-FscEmail.ps1 -SetupCredential"
     }
@@ -457,7 +470,7 @@ foreach ($msg in $messages) {
     $date = $msg.Received.ToString('yyyy-MM-dd')
     if ($MsgFolder) {
         $texts = $msg.Texts
-        if ($msg.From -and $Senders -notcontains $msg.From) {
+        if ($Senders -and $msg.From -and $Senders -notcontains $msg.From) {
             Write-Warning "$(Split-Path $msg.Id -Leaf) is from $($msg.From), not one of the usual senders - reading it anyway."
         }
     }

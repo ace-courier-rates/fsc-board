@@ -95,7 +95,9 @@ The script can also read the mailbox directly over EWS (`-SetupCredential`, then
 as of 2026-10-01 it returns 401 while OWA and Outlook work, so the folder is the live
 route. The credential is stored DPAPI-encrypted in `data/ews-cred.xml`, readable only by
 the Windows account that created it, and is gitignored along with anything pulled from a
-message.
+message. The mail server address and the list of senders whose notices count live in
+gitignored `data/email-config.json` (`{"endpoint": "...", "senders": ["..."]}`); the EWS
+route needs both, and the folder route uses the list only to flag an unexpected sender.
 
 ---
 
