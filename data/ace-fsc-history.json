@@ -237,21 +237,23 @@
       "ab": 46.4,
       "ftl": 63.8,
       "confirmed_through": "2026-10-05",
-      "source": "Email: Dwayne Verbin <dverbin@acecourier.ca>, \"FSC\", 2026-10-01"
+      "source": "ACE FSC notice email, 2026-10-01"
     },
     {
       "effective": "2026-10-05",
       "bc": 51.0,
-      "ab": null,
-      "confirmed_through": "2026-10-13",
-      "source": "https://www.acecourier.ca/faq/"
+      "ab": 38.9,
+      "ftl": 66.0,
+      "confirmed_through": "2026-10-12",
+      "source": "ACE FSC notice email, 2026-10-05 (later of two that day)"
     },
     {
       "effective": "2026-10-13",
       "bc": 52.4,
-      "ab": null,
+      "ab": 40.1,
+      "ftl": 67.4,
       "confirmed_through": "2026-10-21",
-      "source": "https://www.acecourier.ca/faq/"
+      "source": "ACE FSC notice email, 2026-10-13"
     },
     {
       "effective": "2026-10-22",

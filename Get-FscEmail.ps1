@@ -486,13 +486,14 @@ foreach ($msg in $messages) {
         }
         else {
             Write-Host "  ACE: BC $($ace.bc)%  AB $($ace.ab)%  FTL $($ace.ftl)%  -> new change effective $date"
+            # The history file is public on GitHub, so the source never names the sender.
             $changes.Add([pscustomobject]@{
                 effective         = $date
                 bc                = $ace.bc
                 ab                = $ace.ab
                 ftl               = $ace.ftl
                 confirmed_through = $date
-                source            = "Email: $($msg.From), `"$($msg.Subject)`", $date"
+                source            = "ACE FSC notice email, $date"
             })
             $historyDirty = $true
         }
@@ -545,8 +546,27 @@ if ($DryRun) {
     return
 }
 
+# The cloud run (PowerShell 7) commits this file every day in two-space JSON. Windows
+# PowerShell 5.1 indents differently and escapes ' < > &, so its output rewrites every
+# line, and the local commit then conflicts with the cloud's. Match the cloud's layout.
+function ConvertTo-TwoSpaceJson {
+    param([Parameter(Mandatory)] $InputObject, [int] $Depth = 5)
+    $json = $InputObject | ConvertTo-Json -Depth $Depth
+    if ($PSVersionTable.PSVersion.Major -ge 6) { return $json }
+    $level = 0
+    $lines = foreach ($raw in ($json -split "`r?`n")) {
+        $line = $raw.Trim()
+        if (-not $line) { continue }
+        if ($line -match '^[\]}]') { $level-- }
+        ('  ' * $level) + ($line -replace '^("(?:[^"\\]|\\.)*"):\s+', '$1: ')
+        if ($line -match '[\[{]$') { $level++ }
+    }
+    (($lines -join "`n") -replace '\\u0027', "'" -replace '\\u003c', '<' -replace '\\u003e', '>' -replace '\\u0026', '&' `
+        -replace '\[\n\s*\]', '[]' -replace '\{\n\s*\}', '{}')
+}
+
 if ($historyDirty) {
-    [IO.File]::WriteAllText($HistoryPath, ($history | ConvertTo-Json -Depth 5), $utf8NoBom)
+    [IO.File]::WriteAllText($HistoryPath, (ConvertTo-TwoSpaceJson $history -Depth 5), $utf8NoBom)
     Write-Host "`nUpdated $HistoryPath"
 }
 if ($reportsDirty) {

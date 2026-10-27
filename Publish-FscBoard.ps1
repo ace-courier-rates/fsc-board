@@ -129,6 +129,12 @@ if ($push.ExitCode -ne 0) {
     # The cloud run may have pushed in the meantime. Rebase onto it and try once more.
     $rebase = Invoke-Git pull --rebase --quiet origin main
     if ($rebase.ExitCode -eq 0) { $push = Invoke-Git push --quiet origin main }
+    else {
+        # A rebase left half-done blocks every later pull and commit (Oct 15-27 2026).
+        # Back out so the next run starts clean; the local commit waits for a hand merge.
+        Invoke-Git rebase --abort | Out-Null
+        Write-RunLog "rebase onto origin failed and was aborted - $($rebase.Output)"
+    }
 }
 
 if ($push.ExitCode -eq 0) { Write-RunLog ("pushed " + ($files -join ', ') + " ($rows rows)") }
