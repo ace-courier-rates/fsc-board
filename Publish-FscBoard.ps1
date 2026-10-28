@@ -46,6 +46,40 @@ function Invoke-Git {
     [pscustomobject]@{ ExitCode = $LASTEXITCODE; Output = ($out -join "`n") }
 }
 
+# Anything this script doesn't handle itself still leaves a line in the log. Without this
+# an unreadable tracked file ended the run after the pull, and 12 days passed unnoticed
+# (Oct 15-27 2026).
+trap {
+    Write-RunLog "run aborted - $($_.Exception.Message)"
+    break
+}
+
+# A rebase or merge left half-done, or conflict markers in a tracked file, blocks every
+# later pull - and the markers aren't valid JSON, so the next script to read one throws.
+# Clear it here rather than failing the same way every morning.
+function Repair-RepoState {
+    foreach ($op in 'rebase-merge', 'rebase-apply') {
+        if (Test-Path (Join-Path $PSScriptRoot ".git\$op")) {
+            Write-RunLog "found an unfinished rebase; aborting it"
+            Invoke-Git rebase --abort | Out-Null
+        }
+    }
+    if (Test-Path (Join-Path $PSScriptRoot '.git\MERGE_HEAD')) {
+        Write-RunLog 'found an unfinished merge; aborting it'
+        Invoke-Git merge --abort | Out-Null
+    }
+
+    # Generated data; the scrape rebuilds it, so take the committed copy back.
+    $unmerged = @((Invoke-Git ls-files -u --format='%(path)').Output -split "`n" |
+                  ForEach-Object { $_.Trim() } | Where-Object { $_ } | Select-Object -Unique)
+    if ($unmerged.Count) {
+        Write-RunLog ("unmerged file(s) left behind, restoring the committed copy: " + ($unmerged -join ', '))
+        foreach ($p in $unmerged) { Invoke-Git checkout --force HEAD -- $p | Out-Null }
+    }
+}
+
+Repair-RepoState
+
 $snapshot = 'data/local-public.json'
 
 # 1. Pull
@@ -72,7 +106,8 @@ if (Test-Path -LiteralPath $MsgFolder) {
 $historyDirty = (Invoke-Git status --porcelain -- $history).Output.Trim().Length -gt 0
 
 # 3. Scrape
-& (Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1') -NoHistory -PublicSnapshotPath $snapshot | Out-Null
+try { & (Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1') -NoHistory -PublicSnapshotPath $snapshot | Out-Null }
+catch { Write-RunLog "scrape failed - $($_.Exception.Message)"; return }
 
 # Diesel trend for the local dashboard only; the cloud run owns the committed copy.
 try { & (Join-Path $PSScriptRoot 'Get-FuelTrend.ps1') -LocalOnly | Out-Null }
