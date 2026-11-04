@@ -277,11 +277,12 @@ function Get-FscSteeles {
 function Get-FscGrimshaw {
     $url = 'https://www.grimshaw-trucking.com/news'
     $t   = Get-PageText $url
-    # "Current FSC - Effective as of Sep 17th, 2026: Shipments weighing less than 10,000 lbs = 59.8 %
-    #   Shipments weighing 10,000 lbs or more = 98.9 %"
+    # "Current FSC - Effective as of Nov 2nd, 2026: Shipments weighing less than 10,000 lbs. = 67.5 %
+    #   Shipments weighing 10,000 lbs. or more = 108.5 %"
+    # Note the trailing period after "lbs", which the page gained in Nov 2026 - keep it optional.
     $m = [regex]::Match($t, 'Current FSC\s*-\s*Effective as of\s*(?<mon>[A-Za-z]{3,9})\s+(?<day>\d{1,2})(?:st|nd|rd|th)?,?\s*(?<yr>\d{4})\s*:\s*' +
-                            'Shipments weighing less than 10,?000 lbs\s*=\s*(?<u>\d+(?:\.\d+)?)\s*%\s*' +
-                            'Shipments weighing 10,?000 lbs or more\s*=\s*(?<o>\d+(?:\.\d+)?)\s*%', $script:RxOpts)
+                            'Shipments weighing less than 10,?000 lbs\.?\s*=\s*(?<u>\d+(?:\.\d+)?)\s*%\s*' +
+                            'Shipments weighing 10,?000 lbs\.?\s*or more\s*=\s*(?<o>\d+(?:\.\d+)?)\s*%', $script:RxOpts)
     Assert-Match $m 'Grimshaw' 'the current fuel surcharge'
     New-FscWeightPair -Carrier 'Grimshaw Trucking' -Under ([double]$m.Groups['u'].Value) -Over ([double]$m.Groups['o'].Value) `
                       -From (ConvertFrom-LooseDate $m.Groups['mon'].Value $m.Groups['day'].Value $m.Groups['yr'].Value) -Source $url
