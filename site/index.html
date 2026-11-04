@@ -3,224 +3,366 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fuel Surcharge Board</title>
+<title>Fuel Surcharge Board | ACE Courier Services</title>
+<meta name="description" content="Published fuel surcharges for ACE Courier and other BC carriers, checked every morning and compared side by side.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Mono&family=Hind:wght@400;500&family=Roboto+Condensed:wght@300;400;700&display=swap">
 <style>
+  /* ACE Courier website palette (acecourier.ca theme): burnished gold on paper, charcoal and workshop grey.
+     --gold is for fills and rules; --gold-text is a step darker so small gold type passes WCAG AA on white. */
   :root {
-    --bg:        #f6f7f9;
-    --surface:   #ffffff;
-    --border:    #e2e5ea;
-    --text:      #16181d;
-    --muted:     #6b7280;
-    --faint:     #9aa1ab;
-    --ace:       #0b5fff;
-    --ace-soft:  #eaf1ff;
-    --win:       #0f7b45;
-    --win-soft:  #e6f4ec;
-    --lose:      #b4341f;
-    --lose-soft: #fdeeea;
-    --warn:      #8a6100;
-    --warn-soft: #fdf3dd;
-    --radius:    10px;
+    --gold: #8c752e; --gold-text: #7d6928; --gold-hi: #d4af37; --gold-tint: rgba(140,117,46,.17);
+    --ink: #2c2c2c; --body: #666666; --mute: #767676; --faint: #9a9a9a;
+    --rule: #ebebeb; --hair: #f0f0f0; --band: #f4f4f4; --card-line: #e4e4e4; --char: #2c2c2c;
+    --cond: "Roboto Condensed", "Arial Narrow", Arial, sans-serif;
+    --hind: Hind, "Segoe UI", Arial, sans-serif;
+    --mono: "DM Mono", Consolas, monospace;
   }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) {
-      --bg:#0f1115; --surface:#171a20; --border:#282d36; --text:#e8eaee;
-      --muted:#98a0ac; --faint:#6c7480;
-      --ace:#5b9bff; --ace-soft:#16233b;
-      --win:#4fc98a; --win-soft:#12291d;
-      --lose:#ff8f75; --lose-soft:#2e1a15;
-      --warn:#e0b45e; --warn-soft:#2b2312;
-    }
-  }
-  :root[data-theme="dark"] {
-    --bg:#0f1115; --surface:#171a20; --border:#282d36; --text:#e8eaee;
-    --muted:#98a0ac; --faint:#6c7480;
-    --ace:#5b9bff; --ace-soft:#16233b;
-    --win:#4fc98a; --win-soft:#12291d;
-    --lose:#ff8f75; --lose-soft:#2e1a15;
-    --warn:#e0b45e; --warn-soft:#2b2312;
-  }
-
   * { box-sizing: border-box; }
-  body {
-    margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    -webkit-font-smoothing: antialiased;
-  }
-  .wrap { max-width: 1080px; margin: 0 auto; padding: 32px 20px 64px; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: #fff; color: var(--ink); font: 400 15px/1.55 var(--hind); -webkit-font-smoothing: antialiased; }
+  a { color: inherit; }
+  .wrap { width: min(1120px, 100% - 40px); margin: 0 auto; position: relative; }
+  .sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .tri { display: inline-block; width: 0; height: 0; margin-left: 9px; border: 4px solid transparent; border-left: 6px solid var(--gold); border-right: 0; vertical-align: 1px; }
+  .caps { font-family: var(--cond); font-weight: 700; text-transform: uppercase; }
 
-  header { margin-bottom: 28px; }
-  h1 { font-size: 24px; font-weight: 650; margin: 0 0 4px; letter-spacing: -0.01em; }
-  .sub { color: var(--muted); font-size: 14px; margin: 0; }
+  /* utility bar, header, nav: the acecourier.ca header */
+  .util .wrap { height: 40px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--rule);
+    font: 400 11px/1 var(--cond); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); }
+  .util a { text-decoration: none; } .util a:hover { color: var(--gold-text); }
+  .head .wrap { height: 112px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+  .logo img { display: block; height: 74px; width: auto; }
+  .info { display: flex; gap: 44px; margin: 0; padding: 0; list-style: none; }
+  .info li { display: flex; align-items: center; gap: 12px; font: 700 11.5px/1.2 var(--cond); letter-spacing: .06em; text-transform: uppercase; }
+  .info svg { flex: none; }
+  .nav { border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule); }
+  .nav .wrap { display: flex; overflow-x: auto; scrollbar-width: none; }
+  .nav .wrap::-webkit-scrollbar { display: none; }
+  .nav a { flex: none; display: block; padding: 0 26px; border-right: 1px solid var(--rule); text-decoration: none; white-space: nowrap;
+    font: 700 12.5px/52px var(--cond); letter-spacing: .06em; text-transform: uppercase; }
+  .nav a:first-child { border-left: 1px solid var(--rule); }
+  .nav a:hover, .nav a.on { color: var(--gold-text); }
+  .nav a.on { box-shadow: inset 0 2px 0 var(--gold); }
 
-  .benchmark {
-    display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px;
-    background: var(--ace-soft); border: 1px solid var(--border);
-    border-radius: var(--radius); padding: 18px 20px; margin: 22px 0 8px;
-  }
-  .benchmark .label { font-size: 13px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; font-weight: 600; }
-  .benchmark .value { font-size: 34px; font-weight: 680; color: var(--ace); letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
-  .benchmark .since { font-size: 13px; color: var(--muted); }
+  #errors:not(:empty) { margin-top: 20px; }
+  .banner { border: 1px solid var(--card-line); border-left: 3px solid #9a3b2a; background: #fff; padding: 12px 16px; font-size: 14px; color: #7a2e21; }
 
-  .verdict { font-size: 14px; color: var(--muted); margin: 0 0 26px; padding: 0 2px; }
-  .verdict strong { color: var(--text); font-weight: 620; }
+  /* hero: gold block standing on the diesel ridge */
+  .hero { background: var(--char); color: #fff; overflow: hidden; }
+  .hero-in { height: 480px; }
+  .block { position: absolute; left: 0; top: 76px; width: 360px; height: 336px; z-index: 2; background: var(--gold);
+    padding: 36px 38px 32px; display: flex; flex-direction: column; }
+  .block .eyebrow { font: 700 12px/1 var(--cond); letter-spacing: .16em; text-transform: uppercase; color: rgba(255,255,255,.82); }
+  .block .fig { margin: 26px 0 0 -4px; display: flex; align-items: flex-start; font: 300 128px/.86 var(--cond); letter-spacing: -.012em; font-variant-numeric: tabular-nums; }
+  .block .fig small { font: 300 44px/1 var(--cond); margin: 5px 0 0 6px; color: rgba(255,255,255,.88); }
+  .block .lbl { margin-top: 24px; font: 700 16px/1 var(--cond); letter-spacing: .1em; text-transform: uppercase; }
+  .block .foot { margin-top: auto; border-top: 1px solid rgba(255,255,255,.34); padding-top: 15px; min-height: 31px;
+    font: 700 11.5px/1 var(--cond); letter-spacing: .14em; text-transform: uppercase; color: rgba(255,255,255,.88); }
+  .hero-side { position: absolute; left: 360px; right: 0; top: 0; bottom: 0; }
+  .cap1 { position: absolute; left: 0; top: 96px; z-index: 2; background: rgba(244,244,244,.96); padding: 15px 24px 13px; color: var(--ink); }
+  .cap1 h1 { margin: 0; font: 500 15px/22px var(--hind); }
+  .cap1 p { margin: 0; font: 400 15px/22px var(--hind); color: var(--body); }
+  .cta { position: absolute; left: 0; top: 174px; z-index: 2; height: 38px; padding: 0 20px; display: flex; align-items: center; text-decoration: none;
+    background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.22); border-left: 0;
+    font: 700 11.5px/1 var(--cond); letter-spacing: .13em; text-transform: uppercase; color: #fff; }
+  .cta:hover { background: rgba(255,255,255,.14); }
+  .cta .tri { border-left-color: var(--gold-hi); }
+  .hlegend { position: absolute; right: 0; top: 34px; z-index: 2; text-align: right; font: 400 10.5px/1 var(--mono); letter-spacing: .06em; color: #a3a3a3; text-transform: uppercase; }
+  .hlegend .keys { margin-top: 11px; display: flex; gap: 20px; justify-content: flex-end; }
+  .hlegend .keys span { display: flex; align-items: center; gap: 8px; }
+  .hero-chart { position: absolute; inset: 0; }
+  .hero-chart svg { display: block; }
+  .hero-chart .post { font: 400 10.5px var(--mono); fill: #a3a3a3; letter-spacing: .06em; }
+  .hero-chart .ev { font: 700 20px var(--cond); fill: #efefef; }
+  .hero-chart .ek { font: 400 10px var(--mono); fill: #a3a3a3; letter-spacing: .1em; }
+  .hero-chart .sv { font: 400 10.5px var(--mono); fill: #b0b0b0; }
+  .hero-chart .gold { fill: var(--gold-hi); }
 
-  section { margin-bottom: 30px; }
-  h2 {
-    font-size: 12px; text-transform: uppercase; letter-spacing: .08em;
-    color: var(--faint); font-weight: 650; margin: 0 0 10px; padding-left: 2px;
-  }
+  /* numbered columns */
+  .cols { padding: 88px 0 64px; scroll-margin-top: 12px; }
+  .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; }
+  .col h2 { margin: 0; padding-bottom: 18px; border-bottom: 1px solid var(--rule); min-height: 75px;
+    font: 700 20px/28px var(--cond); text-transform: uppercase; letter-spacing: .01em; }
+  .col h2 i { font-style: normal; color: var(--gold-text); }
+  .plate { margin-top: 28px; height: 176px; background: var(--band); position: relative; }
+  .plate .mk, .plate .unit { position: absolute; top: 17px; font: 400 10px/1 var(--mono); letter-spacing: .1em; color: var(--mute); text-transform: uppercase; }
+  .plate .mk { left: 20px; } .plate .unit { right: 20px; }
+  .plate .big { position: absolute; left: 22px; bottom: 30px; display: flex; align-items: flex-start; font: 300 86px/.86 var(--cond); letter-spacing: -.01em; font-variant-numeric: tabular-nums; }
+  .plate .big small { font: 300 32px/1 var(--cond); color: var(--gold-text); margin: 3px 0 0 5px; }
+  .plate .big .pre { font: italic 400 34px/1 var(--hind); color: var(--gold-text); margin: 22px 12px 0 0; }
+  .col p { margin: 24px 0 0; min-height: 46px; font: 400 14px/23px var(--hind); color: var(--body); }
+  .more { display: inline-block; margin-top: 18px; text-decoration: none; font: 700 12px/1 var(--cond); letter-spacing: .08em; text-transform: uppercase; }
+  .more:hover { color: var(--gold-text); }
 
-  .card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); overflow: hidden; }
-  .scroller { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 640px; }
-  th {
-    text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .06em;
-    color: var(--faint); font-weight: 650; padding: 11px 14px;
-    border-bottom: 1px solid var(--border); white-space: nowrap;
-  }
-  td { padding: 12px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
-  tr:last-child td { border-bottom: none; }
-  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  /* comparison ladders */
+  .comp { background: var(--band); padding: 88px 0 72px; scroll-margin-top: 0; }
+  .sec-top { display: flex; justify-content: space-between; align-items: flex-end; gap: 24px 40px; flex-wrap: wrap; margin-bottom: 40px; }
+  .eyebrow-g { font: 700 14px/1 var(--cond); letter-spacing: .05em; text-transform: uppercase; color: var(--gold-text); }
+  .sec-top h2 { margin: 10px 0 0; font: 700 28px/34px var(--cond); text-transform: uppercase; letter-spacing: .005em; }
+  .legend { display: flex; flex-wrap: wrap; gap: 10px 28px; padding-bottom: 6px; font: 400 13px/1 var(--hind); color: var(--body); }
+  .legend span { display: flex; align-items: center; gap: 9px; }
+  .sw-ace { width: 2px; height: 18px; background: var(--gold); }
+  .sw-gap { width: 26px; height: 12px; background: var(--gold-tint); border-right: 2px solid var(--ink); }
+  .sw-neg { width: 26px; height: 12px; background: rgba(44,44,44,.14); border-left: 2px solid var(--ink); }
+  .sw-rep { width: 26px; height: 12px; background: repeating-linear-gradient(135deg, rgba(140,117,46,.34) 0 1.5px, transparent 1.5px 5px); border-right: 2px solid var(--faint); }
 
-  .carrier { font-weight: 600; }
-  .service { color: var(--muted); font-size: 13px; }
-  .pct { font-weight: 640; font-size: 15px; }
-  .dash { color: var(--faint); }
+  .panel { background: #fff; border: 1px solid var(--card-line); padding: 28px 32px 22px; margin-bottom: 24px; scroll-margin-top: 16px; }
+  .panel header { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 18px; margin-bottom: 18px; }
+  .panel h3 { margin: 0; font: 700 17px/30px var(--cond); text-transform: uppercase; letter-spacing: .04em; }
+  .panel header p { margin: 0; font: 400 14px/1.4 var(--hind); color: var(--body); }
+  .lad { display: grid; grid-template-columns: 250px 1fr 104px; column-gap: 28px; align-items: center; }
+  .colh { height: 36px; border-top: 1px solid var(--rule); border-bottom: 1px solid var(--rule);
+    font: 700 10.5px/1 var(--cond); letter-spacing: .13em; text-transform: uppercase; color: var(--mute); }
+  .colh .scale { position: relative; height: 34px; }
+  .colh .scale span { position: absolute; top: 12px; transform: translateX(-50%); white-space: nowrap; }
+  .colh .scale .acelab { color: var(--gold-text); }
+  .colh .c3 { text-align: right; }
+  .row { min-height: 58px; border-top: 1px solid var(--hair); }
+  .rowset > .row:first-child, .div + .row { border-top: 0; }
+  .nm { padding: 10px 0; }
+  .nm b { display: block; font: 700 14px/1.15 var(--cond); letter-spacing: .04em; text-transform: uppercase; }
+  .nm b a { text-decoration: none; } .nm b a:hover { color: var(--gold-text); text-decoration: underline; text-underline-offset: 3px; }
+  .nm .sub { display: block; margin-top: 6px; font: 400 12.5px/1.3 var(--hind); color: var(--mute); }
+  .nm .note { display: block; margin-top: 4px; max-width: 46ch; font: 400 12px/1.4 var(--hind); color: var(--mute); }
+  .tag { display: inline-block; margin-left: 8px; padding: 2px 5px 1px; border: 1px solid currentColor; font: 700 9.5px/1.2 var(--cond); letter-spacing: .1em; text-transform: uppercase; vertical-align: 2px; color: var(--gold-text); }
+  .tag.stale, .tag.manual, .tag.derived, .tag.unavailable { color: var(--mute); }
+  .tag.error { color: #9a3b2a; }
+  .tr { position: relative; align-self: stretch; min-height: 40px; }
+  .tr .gl { position: absolute; top: -1px; bottom: 0; width: 1px; background: var(--hair); }
+  .tr .ace { position: absolute; top: -1px; bottom: 0; width: 2px; margin-left: -1px; background: var(--gold); }
+  .tr .bar { position: absolute; top: 50%; height: 14px; margin-top: -7px; background: var(--gold-tint); }
+  .tr .cap { position: absolute; top: 50%; height: 22px; margin-top: -11px; width: 2px; margin-left: -1px; background: var(--ink); }
+  .tr .ref { position: absolute; top: 50%; height: 22px; margin-top: -11px; border-left: 1px dashed var(--gold); }
+  .tr em { position: absolute; top: 50%; transform: translateY(-46%); font: normal 700 12px/1 var(--cond); letter-spacing: .05em; color: var(--gold-text); white-space: nowrap; }
+  .tr em.left { transform: translate(-100%, -46%); }
+  .vl { text-align: right; font: 400 21px/1 var(--cond); font-variant-numeric: tabular-nums; }
+  .neg .tr .bar { background: rgba(44,44,44,.14); }
+  .neg .tr em { color: var(--ink); }
+  .rep .nm b { color: #5f5f5f; }
+  .rep .tr .bar { background: repeating-linear-gradient(135deg, rgba(140,117,46,.34) 0 1.5px, transparent 1.5px 5px); }
+  .rep .tr .cap { background: var(--faint); }
+  .rep .tr em { color: #8a7a48; }
+  .rep .vl { color: var(--mute); }
+  .none .vl { color: var(--faint); }
+  .div { padding: 15px 0 13px; border-top: 1px solid var(--rule); font: 700 10.5px/1.4 var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
 
-  .delta { font-weight: 620; font-size: 13px; padding: 2px 7px; border-radius: 5px; white-space: nowrap; }
-  .delta.win  { color: var(--win);  background: var(--win-soft); }
-  .delta.lose { color: var(--lose); background: var(--lose-soft); }
-
-  .badge {
-    display: inline-block; font-size: 11px; font-weight: 620; padding: 2px 7px;
-    border-radius: 5px; text-transform: uppercase; letter-spacing: .04em; white-space: nowrap;
-  }
-  .badge.ok          { color: var(--win);  background: var(--win-soft); }
-  .badge.upcoming    { color: var(--ace);  background: var(--ace-soft); }
-  .badge.stale,
-  .badge.reported,
-  .badge.derived     { color: var(--warn); background: var(--warn-soft); }
-  .badge.unavailable { color: var(--faint); background: var(--bg); border: 1px solid var(--border); }
-  .badge.error       { color: var(--lose); background: var(--lose-soft); }
-
-  tr.ace td { background: var(--ace-soft); }
-  tr.ace .carrier { color: var(--ace); }
-  tr.dim td { opacity: .62; }
-
-  .date { font-size: 13px; color: var(--muted); white-space: nowrap; font-variant-numeric: tabular-nums; }
-  .note { font-size: 12px; color: var(--faint); margin-top: 3px; max-width: 46ch; line-height: 1.4; }
-  a { color: var(--ace); text-decoration: none; }
-  a:hover { text-decoration: underline; }
-
-  .banner {
-    border-radius: var(--radius); padding: 12px 15px; font-size: 13.5px;
-    margin-bottom: 20px; border: 1px solid var(--border);
-    background: var(--lose-soft); color: var(--lose);
-  }
-  footer { margin-top: 40px; padding-top: 18px; border-top: 1px solid var(--border); color: var(--faint); font-size: 12.5px; line-height: 1.65; }
-  footer p { margin: 0 0 7px; }
-
-  /* Trend charts. Series colour is slot 1 of the validated reference palette, stepped
-     separately for dark mode; everything else uses the page's own tokens. */
-  :root { --series-1: #2a78d6; --grid: #eceef2; }
-  @media (prefers-color-scheme: dark) {
-    :root:not([data-theme="light"]) { --series-1: #3987e5; --grid: #232830; }
-  }
-  :root[data-theme="dark"] { --series-1: #3987e5; --grid: #232830; }
-
-  .chart-card { position: relative; padding: 18px 18px 8px; }
-  .chart-block + .chart-block { margin-top: 18px; }
-  .chart-title { font-weight: 620; font-size: 14px; }
-  .chart-sub { color: var(--muted); font-size: 12.5px; margin-bottom: 6px; }
+  /* trend detail */
+  .trend { padding: 88px 0 80px; scroll-margin-top: 0; }
+  .chart-panel { position: relative; border: 1px solid var(--card-line); padding: 28px 32px 18px; }
+  .chart-block + .chart-block { margin-top: 26px; }
+  .chart-title { font: 700 15px/1.3 var(--cond); text-transform: uppercase; letter-spacing: .04em; }
+  .chart-title i { display: inline-block; width: 16px; height: 0; margin-right: 10px; vertical-align: 4px; border-top: 2px solid var(--ink); }
+  .chart-title i.g { border-top-color: var(--gold); }
+  .chart-sub { color: var(--body); font-size: 13.5px; margin: 2px 0 8px; }
   .chart { width: 100%; }
   .chart svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
   .chart svg:focus { outline: none; }
-  .chart svg:focus-visible { outline: 2px solid var(--series-1); outline-offset: 4px; border-radius: 4px; }
-  .chart .tick { fill: var(--faint); font-size: 11px; font-variant-numeric: tabular-nums; }
-  .chart .endlabel { fill: var(--text); font-size: 12px; font-weight: 620; }
-  .chart .gaplabel { fill: var(--faint); font-size: 11px; font-style: italic; }
-  .corr { font-size: 13.5px; color: var(--muted); margin: 16px 0 10px; }
-  .corr strong { color: var(--text); font-weight: 620; }
-  .tableview { margin: 4px 0 10px; font-size: 13px; }
-  .tableview summary { cursor: pointer; color: var(--ace); padding: 4px 0; }
-  .tableview table { min-width: 520px; margin-top: 8px; }
-  .tableview td, .tableview th { padding: 7px 10px; }
-  .source { font-size: 12px; color: var(--faint); margin: 8px 2px 0; }
-  .tip {
-    position: absolute; pointer-events: none; z-index: 5; min-width: 170px;
-    background: var(--surface); border: 1px solid var(--border); border-radius: 8px;
-    box-shadow: 0 4px 16px rgba(0,0,0,.12); padding: 9px 11px; font-size: 12.5px;
-  }
-  .tip .tip-head { color: var(--muted); font-size: 12px; margin-bottom: 5px; }
-  .tip .row { display: flex; align-items: center; gap: 8px; margin-top: 3px; white-space: nowrap; }
-  .tip .key { width: 12px; height: 2px; border-radius: 1px; background: var(--series-1); flex: none; }
-  .tip .val { font-weight: 650; color: var(--text); font-variant-numeric: tabular-nums; }
-  .tip .lbl { color: var(--muted); }
+  .chart svg:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+  .chart .tick { fill: var(--mute); font: 400 10.5px var(--mono); }
+  .chart .endlabel { fill: var(--ink); font: 700 13px var(--cond); }
+  .chart .endlabel.g { fill: var(--gold-text); }
+  .chart .gaplabel { fill: var(--faint); font: italic 400 11.5px var(--hind); }
+  .corr { font-size: 14px; color: var(--body); margin: 22px 0 6px; }
+  .corr strong { color: var(--ink); font-weight: 500; }
+  .tableview { margin: 6px 0 8px; font-size: 13px; }
+  .tableview summary { cursor: pointer; display: inline-block; padding: 6px 0; font: 700 12px/1 var(--cond); letter-spacing: .08em; text-transform: uppercase; }
+  .tableview summary:hover { color: var(--gold-text); }
+  .tableview summary::marker { color: var(--gold); }
+  .scroller { overflow-x: auto; }
+  .tableview table { width: 100%; min-width: 520px; border-collapse: collapse; margin-top: 10px; }
+  .tableview th { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap;
+    font: 700 10.5px/1 var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--mute); }
+  .tableview td { padding: 7px 10px; border-bottom: 1px solid var(--hair); }
+  .num { text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .source { font-size: 12.5px; color: var(--mute); margin: 12px 0 0; }
+  .tip { position: absolute; pointer-events: none; z-index: 5; min-width: 180px; background: #fff; border: 1px solid var(--card-line);
+    border-top: 2px solid var(--gold); box-shadow: 0 6px 18px rgba(0,0,0,.10); padding: 9px 12px; font-size: 12.5px; }
+  .tip .tip-head { font: 700 10.5px/1 var(--cond); letter-spacing: .1em; text-transform: uppercase; color: var(--mute); margin-bottom: 7px; }
+  .tip .tip-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; white-space: nowrap; }
+  .tip .key { width: 12px; height: 2px; flex: none; background: var(--ink); }
+  .tip .key.g { background: var(--gold); }
+  .tip .val { font: 700 14px/1 var(--cond); font-variant-numeric: tabular-nums; }
+  .tip .lbl { color: var(--body); }
 
-  @media (max-width: 620px) {
-    .wrap { padding: 22px 14px 48px; }
-    .benchmark .value { font-size: 28px; }
+  /* footer */
+  .foot-band { background: var(--char); color: #b9b9b9; scroll-margin-top: 0; }
+  .foot-band .grid { display: grid; grid-template-columns: 1.15fr 1.15fr .7fr; gap: 40px 64px; padding: 64px 0 56px; }
+  .foot-band h2 { margin: 0 0 18px; font: 700 13px/1 var(--cond); letter-spacing: .12em; text-transform: uppercase; color: var(--gold-hi); }
+  .foot-band p { margin: 0; font: 400 14px/23px var(--hind); }
+  .foot-band .when { font: 700 24px/1 var(--cond); letter-spacing: .03em; color: #fff; margin-bottom: 10px; text-transform: uppercase; }
+  .foot-band .bar { border-top: 1px solid #3a3a3a; }
+  .foot-band .bar .wrap { min-height: 64px; display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; padding: 14px 0;
+    font: 700 11px/1.4 var(--cond); letter-spacing: .14em; text-transform: uppercase; color: #9a9a9a; }
+  .foot-band .bar a { text-decoration: none; } .foot-band .bar a:hover { color: #fff; }
+  .spade { color: var(--gold-hi); margin: 0 14px; }
+
+  /* below the overlay width the hero stacks: block, caption, chart */
+  @media (max-width: 979px) {
+    .info li:nth-child(1) { display: none; }
+    .hero-in { height: auto; padding: 28px 0 18px; }
+    .block, .hero-side, .cap1, .cta, .hlegend, .hero-chart { position: static; }
+    .block { width: auto; height: auto; padding: 28px 28px 24px; }
+    .block .fig { font-size: clamp(84px, 21vw, 128px); }
+    .block .fig small { font-size: clamp(32px, 7vw, 44px); }
+    .block .foot { margin-top: 26px; }
+    .cap1 { padding: 14px 20px 12px; }
+    .cta { display: inline-flex; border-left: 1px solid rgba(255,255,255,.22); border-top: 0; }
+    .hlegend { text-align: left; margin: 30px 0 4px; }
+    .hlegend .keys { justify-content: flex-start; flex-wrap: wrap; }
+    .hero-chart { height: 280px; }
+    .grid3 { grid-template-columns: 1fr; gap: 56px; }
+    .col h2 { min-height: 0; }
+    .foot-band .grid { grid-template-columns: 1fr 1fr; }
+  }
+  @media (max-width: 680px) {
+    .wrap { width: calc(100% - 32px); }
+    .util { display: none; }
+    .head .wrap { height: 88px; }
+    .logo img { height: 56px; }
+    .info { display: none; }
+    .nav a { padding: 0 18px; }
+    .cols, .comp, .trend { padding-top: 64px; }
+    .sec-top h2 { font-size: 24px; line-height: 30px; }
+    .panel, .chart-panel { padding: 20px 16px 14px; }
+    .lad { grid-template-columns: 1fr auto; column-gap: 16px; }
+    .colh .c1, .colh .c3 { display: none; }
+    .colh .scale { grid-column: 1 / -1; grid-row: 1; }
+    .row .nm { grid-column: 1; grid-row: 1; padding: 12px 0 2px; }
+    .row .vl { grid-column: 2; grid-row: 1; align-self: start; padding-top: 14px; }
+    .row .tr { grid-column: 1 / -1; grid-row: 2; min-height: 34px; margin-bottom: 8px; }
+    .row .tr .gl, .row .tr .ace { top: 0; }
+    .foot-band .grid { grid-template-columns: 1fr; gap: 36px; }
   }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <h1>Fuel Surcharge Board</h1>
-    <p class="sub">ACE Courier and other carriers serving BC &mdash; published fuel surcharges, checked daily.</p>
-  </header>
 
-  <div id="errors"></div>
+<div class="util"><div class="wrap"><a href="https://www.acecourier.ca/">acecourier.ca</a><span>Fuel Surcharge Board</span></div></div>
 
-  <div class="benchmark">
-    <span class="label">ACE &mdash; British&nbsp;Columbia</span>
-    <span class="value" id="bench">&mdash;</span>
-    <span class="since" id="benchSince"></span>
-  </div>
-  <p class="verdict" id="verdict"></p>
+<header class="head"><div class="wrap">
+  <a class="logo" href="https://www.acecourier.ca/"><img src="ace-logo.png" alt="ACE Courier Services" width="153" height="74"></a>
+  <ul class="info">
+    <li><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#8c752e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="13" cy="13" r="10"/><path d="M13 7.5V13l3.8 2.6"/></svg>Checked every morning</li>
+    <li><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#8c752e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="19" height="17"/><path d="M3.5 10.5h19M8.5 3v5M17.5 3v5M8 15h2M12 15h2M16 15h2M8 18.5h2M12 18.5h2"/></svg><span id="lastCheck">Last check &mdash;</span></li>
+    <li><svg width="26" height="26" viewBox="0 0 26 26" fill="none" stroke="#8c752e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M13 23.5s-7.5-7.2-7.5-12.6a7.5 7.5 0 0 1 15 0C20.5 16.3 13 23.5 13 23.5z"/><circle cx="13" cy="10.8" r="2.6"/></svg>British Columbia rates</li>
+  </ul>
+</div></header>
 
-  <div id="sections"></div>
+<nav class="nav" aria-label="Sections"><div class="wrap">
+  <a class="on" href="#top" aria-current="page">Fuel Surcharge Board</a><a href="#ace-rates">ACE Rates</a><a href="#comparison">Comparison</a><a href="#trend">12-Month Trend</a><a href="#how">How It Works</a>
+</div></nav>
 
-  <section id="trend" hidden>
-    <h2>Diesel prices and ACE's fuel surcharge &mdash; last 12 months</h2>
-    <div class="card chart-card">
-      <div class="chart-block">
-        <div class="chart-title">Diesel, British Columbia</div>
-        <div class="chart-sub">Weekly average retail price across the seven BC cities Natural Resources Canada surveys, cents per litre, taxes included</div>
-        <div class="chart" id="chartDiesel"></div>
+<main id="top">
+  <div class="wrap" id="errors"></div>
+
+  <section class="hero" aria-labelledby="heroTitle">
+    <div class="wrap hero-in">
+      <div class="block">
+        <div class="eyebrow">ACE &mdash; British&nbsp;Columbia</div>
+        <div class="fig"><span id="bench">&mdash;</span><small>%</small></div>
+        <div class="lbl">Fuel surcharge</div>
+        <div class="foot" id="benchSince"></div>
       </div>
-      <div class="chart-block">
-        <div class="chart-title">ACE fuel surcharge, British Columbia</div>
-        <div class="chart-sub">Percent of base rate, as published. Gaps are periods with no record of ACE's rate.</div>
-        <div class="chart" id="chartAce"></div>
+      <div class="hero-side">
+        <div class="cap1" id="heroCap"><h1 id="heroTitle">Published fuel surcharges, BC carriers</h1><p>Checked every morning, compared side by side</p></div>
+        <a class="cta" id="heroCta" href="#comparison">See the comparison<i class="tri"></i></a>
+        <div class="hlegend" id="heroLegend" hidden>
+          <div id="heroFig">Fig. A</div>
+          <div class="keys">
+            <span><svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true"><path d="M0 12V5l7-3 8 2 7-4v12z" fill="#fff" fill-opacity=".07"/><path d="M4 12V4M8 12V2.5M12 12V3.6M16 12V3.2M20 12V1.3" stroke="#fff" stroke-opacity=".14"/><path d="M0 5l7-3 8 2 7-4" fill="none" stroke="#a7a7a7" stroke-width="1.2"/></svg>BC diesel, &cent;/L</span>
+            <span><svg width="22" height="12" viewBox="0 0 22 12" aria-hidden="true"><path d="M0 9h7V6h8V3h7" fill="none" stroke="#d4af37" stroke-width="2"/></svg>ACE BC surcharge, %</span>
+          </div>
+        </div>
+        <div class="hero-chart" id="heroChart"></div>
       </div>
-      <p class="corr" id="corr"></p>
-      <details class="tableview">
-        <summary>Show as table</summary>
-        <div class="scroller">
-          <table id="trendTable">
-            <thead><tr><th>Week ending</th><th class="num">Diesel, BC (&cent;/L)</th><th class="num">ACE BC surcharge, week average</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <div class="scroller">
-          <table id="changeTable">
-            <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, BC, that week</th><th>Confirmed through</th></tr></thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </details>
-      <div class="tip" id="trendTip" hidden></div>
     </div>
-    <p class="source" id="trendSource"></p>
   </section>
 
-  <footer>
-    <p id="stamp"></p>
-    <p>Fuel surcharges reset <strong>weekly</strong> &mdash; most carriers change on Monday, pegged to the diesel index published the prior Thursday. This board re-checks every morning and records each change.</p>
-    <p>Rates are each carrier's own published fuel surcharge, collected from their websites.</p>  </footer>
-</div>
+  <section class="cols" id="ace-rates" aria-label="ACE rates at a glance">
+    <div class="wrap grid3">
+      <article class="col">
+        <h2><i>01.</i> ACE FTL /<br>Direct Drive</h2>
+        <div class="plate"><span class="mk">Fig. 01</span><span class="unit">% of base rate</span>
+          <div class="big"><span id="ftl">&mdash;</span><small>%</small></div></div>
+        <p>ACE&rsquo;s published truckload surcharge, measured against each carrier&rsquo;s rate for shipments of 10,000&nbsp;lb and over.</p>
+        <a class="more" href="#cmp-ftl" id="ftlEff">Truckload comparison<i class="tri"></i></a>
+      </article>
+      <article class="col">
+        <h2><i>02.</i> <span id="vHead">Against published<br>rates</span></h2>
+        <div class="plate"><span class="mk">Fig. 02</span><span class="unit">Published rates</span>
+          <div class="big"><span id="vNum">&mdash;</span><small id="vDen"></small></div></div>
+        <p id="verdict">&nbsp;</p>
+        <a class="more" href="#comparison">See the comparison<i class="tri"></i></a>
+      </article>
+      <article class="col">
+        <h2><i>03.</i> Moves with<br>BC diesel</h2>
+        <div class="plate"><span class="mk">Fig. 03</span><span class="unit" id="corrN"></span>
+          <div class="big"><span class="pre">r</span><span id="corrR">&mdash;</span></div></div>
+        <p id="corrText">Correlation of ACE&rsquo;s BC surcharge with the same week&rsquo;s average BC diesel price.</p>
+        <a class="more" href="#trend">12-month trend<i class="tri"></i></a>
+      </article>
+    </div>
+  </section>
+
+  <section class="comp" id="comparison" aria-labelledby="compTitle">
+    <div class="wrap">
+      <div class="sec-top">
+        <div><div class="eyebrow-g">Comparison</div><h2 id="compTitle">Every published rate, side by side</h2></div>
+        <div class="legend" id="legend" aria-hidden="true"></div>
+      </div>
+      <div id="panels"></div>
+    </div>
+  </section>
+
+  <section class="trend" id="trend" aria-labelledby="trendTitle" hidden>
+    <div class="wrap">
+      <div class="sec-top">
+        <div><div class="eyebrow-g">12-Month Trend</div><h2 id="trendTitle">Diesel and ACE&rsquo;s surcharge, week by week</h2></div>
+      </div>
+      <div class="chart-panel">
+        <div class="chart-block">
+          <div class="chart-title"><i></i>Diesel, British Columbia</div>
+          <div class="chart-sub">Weekly average retail price across the seven BC cities Natural Resources Canada surveys, cents per litre, taxes included</div>
+          <div class="chart" id="chartDiesel"></div>
+        </div>
+        <div class="chart-block">
+          <div class="chart-title"><i class="g"></i>ACE fuel surcharge, British Columbia</div>
+          <div class="chart-sub">Percent of base rate, as published. Gaps are periods with no record of ACE&rsquo;s rate.</div>
+          <div class="chart" id="chartAce"></div>
+        </div>
+        <p class="corr" id="corr"></p>
+        <details class="tableview">
+          <summary>Show as table</summary>
+          <div class="scroller">
+            <table id="trendTable">
+              <thead><tr><th>Week ending</th><th class="num">Diesel, BC (&cent;/L)</th><th class="num">ACE BC surcharge, week average</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="scroller">
+            <table id="changeTable">
+              <thead><tr><th>ACE surcharge change</th><th class="num">BC surcharge</th><th class="num">Diesel, BC, that week</th><th>Confirmed through</th></tr></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </details>
+        <div class="tip" id="trendTip" hidden></div>
+      </div>
+      <p class="source" id="trendSource"></p>
+    </div>
+  </section>
+</main>
+
+<footer class="foot-band" id="how">
+  <div class="wrap grid">
+    <div><h2>How it works</h2><p>Fuel surcharges reset weekly. Most carriers change on Monday, pegged to the diesel index published the prior Thursday. This board re-checks every morning and records each change.</p></div>
+    <div><h2>Sources</h2><p>Each carrier&rsquo;s own published fuel surcharge, collected from its website. Diesel: Natural Resources Canada, weekly average retail price across seven BC cities, taxes included.</p></div>
+    <div><h2>Last checked</h2><div class="when" id="stampDate">&mdash;</div><p id="stamp"></p></div>
+  </div>
+  <div class="bar"><div class="wrap"><span>ACE Courier Services<span class="spade" aria-hidden="true">&#9824;</span>Fuel Surcharge Board</span><a href="https://www.acecourier.ca/">acecourier.ca</a></div></div>
+</footer>
 
 <script>
 (function () {
@@ -231,155 +373,194 @@
   // "reported" = a dated rate for a carrier that doesn't publish one; the public snapshot
   // only contains these for carriers deliberately marked for publication.
   var PUBLIC_STATUSES = { ok: 1, upcoming: 1, reported: 1 };
+  var NOT_LIVE = { reported: 1, derived: 1, manual: 1, stale: 1 };
+  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-  var GROUPS = [
-    { key: 'ace',     title: 'ACE Courier' },
-    { key: 'ltl',     title: 'LTL & Freight' },
-    { key: 'parcel',  title: 'Parcel carriers' },
-    { key: 'courier', title: 'Same-day / expedited' }
-  ];
-
+  function $(id) { return document.getElementById(id); }
   function esc(s) {
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
   }
-
   function fmtDate(iso) {
     if (!iso) return '';
     var p = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
     if (!p) return esc(iso);
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return months[+p[2] - 1] + ' ' + (+p[3]) + ', ' + p[1];
+    return MONTHS[+p[2] - 1] + ' ' + (+p[3]) + ', ' + p[1];
+  }
+  function r1(v) { return (Math.round((Math.abs(v) + 1e-9) * 10) / 10).toFixed(1); }   // half-up, 19.25 -> 19.3
+  function signed(v) { return (v < 0 ? '−' : '+') + r1(v); }
+  // The visitor's own clock, as before. A named zone is avoided on purpose: browsers' tz data
+  // and Windows disagree on Pacific time for Nov 2026, and a wrong "PT" would be worse than none.
+  function stamp(iso) {
+    var d = new Date(iso);
+    return {
+      date: MONTHS[d.getMonth()] + ' ' + d.getDate() + ', ' + d.getFullYear(),
+      time: d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }).replace('AM', 'a.m.').replace('PM', 'p.m.')
+    };
+  }
+
+  //----------------------------------------------------------------------------
+  // Rates: hero figure, the three numbered columns and the comparison ladders.
+  //----------------------------------------------------------------------------
+  function aceRow(data, service) {
+    return (data.rates || []).filter(function (r) { return r.carrier === 'ACE Courier' && r.service.indexOf(service) === 0; })[0];
+  }
+  // Truckload rates are measured against ACE FTL, everything else against ACE British Columbia.
+  function family(r) {
+    return (r.benchmark && r.benchmark.indexOf('FTL') !== -1) || /^truckload/i.test(r.service || '') ? 'ftl' : 'bc';
   }
 
   function render(data) {
     if (!data) {
-      document.getElementById('sections').innerHTML =
-        '<div class="banner">Rates are temporarily unavailable. Please check back shortly.</div>';
+      $('panels').innerHTML = '<div class="banner">Rates are temporarily unavailable. Please check back shortly.</div>';
       return;
     }
-
-    var bench = data.ace_benchmark;
-    document.getElementById('bench').textContent = (bench != null ? bench.toFixed(2) + '%' : '—');
-
-    var aceRow = (data.rates || []).filter(function (r) {
-      return r.carrier === 'ACE Courier' && r.service === 'British Columbia';
-    })[0];
-    if (aceRow && aceRow.effective_from) {
-      document.getElementById('benchSince').textContent = 'effective ' + fmtDate(aceRow.effective_from);
-    }
+    var bc = aceRow(data, 'British Columbia'), ftl = aceRow(data, 'FTL');
+    var bench = data.ace_benchmark != null ? data.ace_benchmark : (bc ? bc.percent : null);
+    $('bench').textContent = bench != null ? bench.toFixed(2) : '—';
+    if (bc && bc.effective_from) $('benchSince').textContent = 'Effective ' + fmtDate(bc.effective_from);
+    if (ftl && ftl.percent > 0) $('ftl').textContent = ftl.percent.toFixed(2);
+    else $('ftl').nextElementSibling.textContent = '';
+    if (ftl && ftl.effective_from) $('ftlEff').innerHTML = 'Effective ' + fmtDate(ftl.effective_from) + '<i class="tri"></i>';
 
     // Headline: how ACE compares across everything we could actually measure.
-    var compared = (data.rates || []).filter(function (r) {
-      return r.delta_points != null && r.status === 'ok';
-    });
+    var compared = (data.rates || []).filter(function (r) { return r.delta_points != null && r.status === 'ok'; });
     var cheaper = compared.filter(function (r) { return r.delta_points > 0; });
-    var v = document.getElementById('verdict');
     if (compared.length) {
       var spread = cheaper.map(function (r) { return r.delta_points; });
       var lo = Math.min.apply(null, spread), hi = Math.max.apply(null, spread);
-      v.innerHTML = 'ACE is cheaper on fuel than <strong>' + cheaper.length + ' of ' + compared.length +
-        '</strong> comparable published rates' +
-        (cheaper.length ? ', by <strong>' + lo.toFixed(1) + '&ndash;' + hi.toFixed(1) +
-        ' percentage points</strong>' : '') + '.';
+      $('vHead').innerHTML = 'Lower than<br>' + cheaper.length + ' of ' + compared.length + ' rates';
+      $('vNum').textContent = cheaper.length;
+      $('vDen').textContent = '/' + compared.length;
+      $('verdict').textContent = cheaper.length === compared.length
+        ? 'ACE’s surcharge sits below every comparable published rate on this board, by ' + r1(lo) + ' to ' + r1(hi) + ' percentage points.'
+        : 'ACE’s surcharge is lower than ' + cheaper.length + ' of the ' + compared.length + ' comparable published rates on this board' +
+          (cheaper.length ? ', by ' + r1(lo) + ' to ' + r1(hi) + ' percentage points.' : '.');
     } else {
-      v.textContent = 'No comparable published rates available yet.';
+      $('verdict').textContent = 'No comparable published rates available yet.';
     }
 
     if (INTERNAL && data.errors && data.errors.length) {
-      document.getElementById('errors').innerHTML =
-        '<div class="banner"><strong>' + data.errors.length + ' scraper(s) failed.</strong> ' +
-        data.errors.map(function (e) { return esc(e.carrier) + ' &mdash; ' + esc(e.error); }).join('; ') +
-        '</div>';
+      $('errors').innerHTML = '<div class="banner"><strong>' + data.errors.length + ' scraper(s) failed.</strong> ' +
+        data.errors.map(function (e) { return esc(e.carrier) + ' &mdash; ' + esc(e.error); }).join('; ') + '</div>';
     }
 
-    var html = '';
-    GROUPS.forEach(function (g) {
-      var rows = (data.rates || []).filter(function (r) {
-        return (r.segment || 'parcel') === g.key && (INTERNAL || PUBLIC_STATUSES[r.status]);
-      });
-      if (!rows.length) return;
+    renderLadders(data, { bc: bench, ftl: ftl ? ftl.percent : null });
 
-      // Live rates first, then upcoming/derived, then anything we couldn't get.
-      var rank = { ok: 0, upcoming: 1, reported: 2, derived: 3, manual: 4, stale: 5, unavailable: 6, error: 7 };
-      // NB: `rank[s] || 9` would map ok's rank of 0 to 9 - check for undefined instead.
-      function rankOf(s) { return rank[s] === undefined ? 9 : rank[s]; }
-      rows.sort(function (a, b) {
-        var d = rankOf(a.status) - rankOf(b.status);
-        if (d) return d;
-        d = (b.percent || 0) - (a.percent || 0);
-        if (d) return d;
-        return a.carrier.localeCompare(b.carrier);
-      });
+    if (data.generated_at) {
+      var s = stamp(data.generated_at);
+      $('lastCheck').textContent = 'Last check ' + s.date;
+      $('stampDate').textContent = s.date;
+      $('stamp').textContent = s.time + ' · ' + (data.ok_count || 0) + ' rates read live';
+    } else if (data.generated_date) {
+      $('stampDate').textContent = fmtDate(data.generated_date);
+    }
+  }
 
-      html += '<section><h2>' + esc(g.title) + '</h2><div class="card"><div class="scroller"><table>' +
-              // ACE can't be compared with itself, so its own table has no "vs ACE" column.
-              '<thead><tr><th>Carrier</th><th class="num">FSC</th>' + (g.key === 'ace' ? '' : '<th class="num">vs ACE</th>') +
-              '<th>Effective</th><th>Status</th></tr></thead><tbody>';
-
-      rows.forEach(function (r) {
-        var isAce = r.carrier === 'ACE Courier';
-        var muted = (r.status === 'unavailable' || r.status === 'error');
-        var cls = (isAce ? 'ace' : '') + (muted ? ' dim' : '');
-
-        var pct = (r.percent > 0)
-          ? '<span class="pct">' + r.percent.toFixed(2) + '%</span>'
-          : '<span class="dash">&mdash;</span>';
-
-        var delta = '';
-        if (r.delta_points != null) {
-          // Positive delta = competitor charges more = ACE wins.
-          var win = r.delta_points > 0;
-          var tip = r.benchmark ? ' title="vs ' + esc(r.benchmark) + '"' : '';
-          delta = '<span class="delta ' + (win ? 'win' : 'lose') + '"' + tip + '>' +
-                  (win ? '+' : '') + r.delta_points.toFixed(1) + ' pt</span>';
-          if (r.benchmark && r.benchmark.indexOf('FTL') !== -1) {
-            delta += '<div class="note" style="margin-top:4px">vs ACE FTL</div>';
-          } else if (r.benchmark && / on \d{4}-\d{2}-\d{2}$/.test(r.benchmark)) {
-            // Dated competitor rates are compared with ACE's rate on the same date.
-            var onDate = fmtDate(r.benchmark.slice(-10)).replace(/, \d{4}$/, '');
-            delta += '<div class="note" style="margin-top:4px">vs ACE on ' + esc(onDate) + '</div>';
-          }
-        }
-
-        var when = r.effective_from ? fmtDate(r.effective_from) : '';
-        if (r.effective_to) when += ' &ndash; ' + fmtDate(r.effective_to);
-
-        var name = r.source
-          ? '<a href="' + esc(r.source) + '" target="_blank" rel="noopener">' + esc(r.carrier) + '</a>'
-          : esc(r.carrier);
-
-        html += '<tr class="' + cls + '">' +
-          '<td><div class="carrier">' + name + '</div>' +
-              '<div class="service">' + esc(r.service) + '</div>' +
-              (r.note && (INTERNAL || r.status === 'upcoming' || r.status === 'reported') ? '<div class="note">' + esc(r.note) + '</div>' : '') + '</td>' +
-          '<td class="num">' + pct + '</td>' +
-          (g.key === 'ace' ? '' : '<td class="num">' + delta + '</td>') +
-          '<td class="date">' + when + '</td>' +
-          '<td><span class="badge ' + esc(r.status) + '">' + esc(r.status) + '</span></td>' +
-          '</tr>';
-      });
-
-      html += '</tbody></table></div></div></section>';
+  function renderLadders(data, benches) {
+    var rows = (data.rates || []).filter(function (r) {
+      return r.segment !== 'ace' && r.carrier !== 'ACE Courier' && (INTERNAL || PUBLIC_STATUSES[r.status]);
     });
+    var panels = [
+      { key: 'bc',  id: 'cmp-bc',  title: 'Under 10,000 lb',    sub: 'Compared with ACE British Columbia', bench: benches.bc },
+      { key: 'ftl', id: 'cmp-ftl', title: '10,000 lb and over', sub: 'Compared with ACE FTL / Direct Drive', bench: benches.ftl }
+    ];
 
-    document.getElementById('sections').innerHTML = html;
+    // One scale for every panel, so equal gaps draw as equal lengths.
+    var vals = [];
+    rows.forEach(function (r) { if (r.percent > 0) { vals.push(r.percent); if (r.delta_points != null) vals.push(r.percent - r.delta_points); } });
+    panels.forEach(function (p) { if (p.bench != null) vals.push(p.bench); });
+    if (!vals.length) { $('panels').innerHTML = '<div class="banner">No rates to compare yet.</div>'; return; }
+    var vmin = Math.min.apply(null, vals), vmax = Math.max.apply(null, vals);
+    var LO = Math.floor((vmin - 4) / 20) * 20, HI = vmax + Math.max(8, (vmax - LO) * 0.16);
+    function pos(v) { return ((v - LO) / (HI - LO) * 100).toFixed(3) + '%'; }
+    var ticks = []; for (var t = LO; t <= HI - 4; t += 20) ticks.push(t);
 
-    var when = data.generated_at ? new Date(data.generated_at) : null;
-    document.getElementById('stamp').textContent =
-      'Last checked ' + (when ? when.toLocaleString() : data.generated_date) +
-      ' — ' + (data.ok_count || 0) + ' rates scraped live.';
+    var seen = { neg: 0, rep: 0 };
+    var html = '';
+    panels.forEach(function (p) {
+      var prs = rows.filter(function (r) { return family(r) === p.key; });
+      if (!prs.length) return;
+      var byPct = function (a, b) { return (b.percent || 0) - (a.percent || 0) || a.carrier.localeCompare(b.carrier); };
+      var live = prs.filter(function (r) { return (r.status === 'ok' || r.status === 'upcoming') && r.percent > 0; })
+                    .sort(function (a, b) { return (a.status === 'ok' ? 0 : 1) - (b.status === 'ok' ? 0 : 1) || byPct(a, b); });
+      var rep = prs.filter(function (r) { return NOT_LIVE[r.status] && r.percent > 0; }).sort(byPct);
+      var none = prs.filter(function (r) { return live.indexOf(r) < 0 && rep.indexOf(r) < 0; })
+                    .sort(function (a, b) { return a.carrier.localeCompare(b.carrier); });
+
+      var ax = p.bench != null ? (p.bench - LO) / (HI - LO) : null;
+      var grid = ticks.map(function (v) { return '<i class="gl" style="left:' + pos(v) + '"></i>'; }).join('') +
+                 (ax != null ? '<i class="ace" style="left:' + pos(p.bench) + '"></i>' : '');
+      var tickLabels = ticks.filter(function (v) { return ax == null || Math.abs((v - LO) / (HI - LO) - ax) > 0.1; })
+                            .map(function (v) { return '<span style="left:' + pos(v) + '">' + v + '%</span>'; }).join('') +
+                       (ax != null ? '<span class="acelab" style="left:' + pos(p.bench) + '">ACE ' + p.bench.toFixed(2) + '</span>' : '');
+
+      function row(r, kind) {
+        var hasPct = r.percent > 0, d = r.delta_points, track = '', cls = 'row lad' + (kind === 'rep' ? ' rep' : '') + (kind === 'none' ? ' none' : '');
+        if (hasPct && d != null) {
+          var start = r.percent - d, a = Math.min(start, r.percent), b = Math.max(start, r.percent);
+          if (d < 0) { cls += ' neg'; seen.neg = 1; }
+          if (kind === 'rep') seen.rep = 1;
+          track = '<i class="bar" style="left:' + pos(a) + ';width:' + ((b - a) / (HI - LO) * 100).toFixed(3) + '%"></i>' +
+                  (p.bench != null && Math.abs(start - p.bench) > 0.05 ? '<i class="ref" style="left:' + pos(start) + '"></i>' : '') +
+                  '<i class="cap" style="left:' + pos(r.percent) + '"></i>' +
+                  '<em style="left:calc(' + pos(b) + ' + 10px)">' + signed(d) + ' PT</em>';
+        } else if (hasPct) {
+          track = '<i class="cap" style="left:' + pos(r.percent) + '"></i>';
+        }
+        var name = r.source ? '<a href="' + esc(r.source) + '" target="_blank" rel="noopener">' + esc(r.carrier) + '</a>' : esc(r.carrier);
+        var when = r.effective_from ? fmtDate(r.effective_from) : '';
+        if (r.effective_to && r.status !== 'reported') when += ' – ' + fmtDate(r.effective_to);
+        var sub = r.status === 'ok' ? 'Effective ' + when
+                : r.status === 'upcoming' ? 'From ' + when
+                : r.status === 'reported' ? 'Reported ' + when + (r.benchmark_date ? ' · vs ACE that day' : '')
+                : (when ? when : esc(r.service));
+        var tag = r.status === 'ok' || r.status === 'reported' ? '' : '<span class="tag ' + esc(r.status) + '">' + esc(r.status) + '</span>';
+        var showNote = r.note && (INTERNAL || r.status === 'upcoming');
+        var sr = d != null ? '<span class="sr">, ' + r1(d) + ' points ' + (d >= 0 ? 'higher' : 'lower') + ' than ACE</span>' : '';
+        return '<div class="' + cls + '">' +
+          '<div class="nm"><b>' + name + tag + '</b><span class="sub">' + sub + '</span>' + sr +
+            (showNote ? '<span class="note">' + esc(r.note) + '</span>' : '') + '</div>' +
+          '<div class="tr" aria-hidden="true">' + grid + track + '</div>' +
+          '<div class="vl">' + (hasPct ? r.percent.toFixed(2) + '%' : '—') + '</div></div>';
+      }
+
+      var body = '<div class="rowset">' + live.map(function (r) { return row(r, 'live'); }).join('');
+      if (rep.length) {
+        var dates = rep.map(function (r) { return r.effective_from; }).filter(function (v, i, a) { return a.indexOf(v) === i; });
+        var allReported = rep.every(function (r) { return r.status === 'reported'; });
+        body += '<div class="div">' + (allReported
+          ? 'Not published by the carrier — ' + (dates.length === 1 ? 'last reported ' + fmtDate(dates[0]) + '; gap measured against ACE’s rate that day' : 'gap measured against ACE’s rate on the date reported')
+          : 'Not a live published rate — gap measured against ACE’s rate on the date shown') + '</div>';
+        body += rep.map(function (r) { return row(r, 'rep'); }).join('');
+      }
+      if (none.length) {
+        body += '<div class="div">No rate found</div>' + none.map(function (r) { return row(r, 'none'); }).join('');
+      }
+      body += '</div>';
+
+      html += '<section class="panel" id="' + p.id + '" aria-label="' + esc(p.title) + '">' +
+        '<header><h3>' + p.title + '</h3><p>' + p.sub + (p.bench != null ? ' &nbsp;&middot;&nbsp; ' + p.bench.toFixed(2) + '%' : ' &nbsp;&middot;&nbsp; ACE&rsquo;s rate isn&rsquo;t available on this check, so no gaps are drawn') + '</p></header>' +
+        '<div class="colh lad" aria-hidden="true"><span class="c1">Carrier</span><div class="scale">' + tickLabels + '</div><span class="c3">FSC</span></div>' +
+        body + '</section>';
+    });
+    $('panels').innerHTML = html || '<div class="banner">No rates to compare yet.</div>';
+
+    $('legend').innerHTML = '<span><i class="sw-ace"></i>ACE’s published rate</span><span><i class="sw-gap"></i>Gap to the other carrier</span>' +
+      (seen.neg ? '<span><i class="sw-neg"></i>Carrier below ACE</span>' : '') +
+      (seen.rep ? '<span><i class="sw-rep"></i>Reported, not published</span>' : '');
   }
 
   //----------------------------------------------------------------------------
-  // Trend: diesel vs ACE surcharge. Two charts on one shared time axis - never one
-  // chart with two y-scales, whose arbitrary alignment would invent a relationship.
+  // Trend data drives two views. The hero draws diesel as a ridge (one hairline per
+  // week) with ACE's surcharge laid in as a road, mapped onto the diesel scale through
+  // the least-squares fit between them; the endpoint labels carry the real values.
+  // The detail section below keeps two charts on one shared time axis with their own
+  // y-scales, tooltips and a table, for anyone who wants to read values exactly.
   //----------------------------------------------------------------------------
-
   var SVGNS = 'http://www.w3.org/2000/svg';
   var DAY = 864e5;
-  var MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   var trendData = null;
   var trendState = { index: -1 };
 
@@ -397,6 +578,7 @@
     if (parent) parent.appendChild(n);
     return n;
   }
+  function txt(parent, attrs, s) { var t = el('text', attrs, parent); t.textContent = s; return t; }
   function niceTicks(min, max, count) {
     if (min === max) { min -= 1; max += 1; }
     var raw = (max - min) / count;
@@ -407,14 +589,133 @@
     for (var v = lo; v <= hi + step / 1e6; v += step) out.push(Math.round(v * 1e6) / 1e6);
     return out;
   }
+  function clippedSegments(x0, x1) {
+    return trendData.ace_segments.map(function (s) {
+      return { from: Math.max(utc(s.from), x0), to: Math.min(utc(s.to), x1), start: utc(s.from), bc: s.bc };
+    }).filter(function (s) { return s.to >= x0 && s.from <= x1; });
+  }
 
-  // Shared geometry for both charts.
+  // --- hero ridge ------------------------------------------------------------
+  var overlayMQ = window.matchMedia('(min-width: 980px)');
+
+  function drawHero() {
+    var host = $('heroChart');
+    host.textContent = '';
+    var t = trendData, pts = t.points.filter(function (p) { return p.diesel != null; });
+    if (pts.length < 2) return;
+    var overlay = overlayMQ.matches;
+    var W = Math.round(host.clientWidth), H = Math.round(host.clientHeight);
+    if (W < 200 || H < 120) return;
+    var LAB = W < 420 ? 76 : 84, PX = W - LAB, BASE = H - (overlay ? 68 : 42);
+    var x0 = utc(t.window.from), x1 = utc(t.window.to);
+    function X(ms) { return (ms - x0) / (x1 - x0) * PX; }
+
+    var dv = pts.map(function (p) { return p.diesel; });
+    var dmin = Math.min.apply(null, dv), dmax = Math.max.apply(null, dv), rng = Math.max(dmax - dmin, 1);
+    var LO = dmin - rng * 0.36, HI = dmax + rng * 0.05;
+    function F(v) { return (v - LO) / (HI - LO); }
+
+    // ACE on the diesel scale via s = a + b*d; ROAD_OFF keeps the road just under the ridge.
+    var pairs = t.points.filter(function (p) { return p.diesel != null && p.ace_bc != null; });
+    var a = 0, b = 0, fit = pairs.length >= 8;
+    if (fit) {
+      var md = 0, ms = 0; pairs.forEach(function (p) { md += p.diesel; ms += p.ace_bc; }); md /= pairs.length; ms /= pairs.length;
+      var sxy = 0, sxx = 0; pairs.forEach(function (p) { sxy += (p.diesel - md) * (p.ace_bc - ms); sxx += (p.diesel - md) * (p.diesel - md); });
+      b = sxx ? sxy / sxx : 0; a = ms - b * md; fit = b > 0;
+    }
+    var segs = clippedSegments(x0, x1);
+    var svals = segs.map(function (s) { return s.bc; });
+    var smin = Math.min.apply(null, svals), smax = Math.max.apply(null, svals);
+    var ROAD_OFF = 24;
+    function Fs(v) { return fit ? F((v - a) / b) : 0.08 + 0.8 * (v - smin) / Math.max(smax - smin, 1); }
+
+    // Vertical span: as tall as the space allows, then shortened wherever the ridge, the road or
+    // the end labels would run into the caption, the button or the legend sitting over the chart.
+    var S = BASE - (overlay ? 120 : 34);
+    var hb = host.getBoundingClientRect();
+    function box(id) { var n = $(id); if (!overlay || !n || n.hidden) return null; var r = n.getBoundingClientRect(); return { l: r.left - hb.left, r: r.right - hb.left, b: r.bottom - hb.top }; }
+    var boxes = [box('heroCap'), box('heroCta'), box('heroLegend')].filter(Boolean);
+    function limit(x, f, off, pad) {
+      boxes.forEach(function (bx) {
+        if (x >= bx.l - 14 && x <= bx.r + 14 && f > 0) S = Math.min(S, (BASE + off - bx.b - pad) / f);
+      });
+    }
+    pts.forEach(function (p) { limit(X(utc(p.date)), F(p.diesel), 0, 18); });
+    segs.forEach(function (s) { limit(X(s.from), Fs(s.bc), ROAD_OFF, 18); limit(X(s.to), Fs(s.bc), ROAD_OFF, 18); });
+    var last = pts[pts.length - 1];
+    boxes.forEach(function (bx) { if (bx.r > PX) S = Math.min(S, (BASE - bx.b - 50) / F(last.diesel)); });
+    S = Math.max(S, 60);
+    function Y(v) { return BASE - F(v) * S; }
+    function Ys(v) { return BASE - Fs(v) * S + (fit ? ROAD_OFF : 0); }
+
+    var svg = el('svg', { width: W, height: H, viewBox: '0 0 ' + W + ' ' + H, role: 'img',
+      'aria-label': 'BC diesel over the last 12 months, ' + pts[0].diesel.toFixed(1) + ' to ' + last.diesel.toFixed(1) +
+        ' cents a litre, with ACE’s BC surcharge following it from ' + segs[0].bc.toFixed(1) + '% to ' + segs[segs.length - 1].bc.toFixed(1) + '%.' }, host);
+    var defs = el('defs', {}, svg), lg = el('linearGradient', { id: 'ridgeFill', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+    el('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': '.075' }, lg);
+    el('stop', { offset: 1, 'stop-color': '#fff', 'stop-opacity': '.015' }, lg);
+
+    var line = pts.map(function (p) { return X(utc(p.date)).toFixed(2) + ',' + Y(p.diesel).toFixed(2); }).join(' ');
+    el('polygon', { points: X(utc(pts[0].date)).toFixed(2) + ',' + BASE + ' ' + line + ' ' + X(utc(last.date)).toFixed(2) + ',' + BASE, fill: 'url(#ridgeFill)' }, svg);
+    var hatch = el('g', { stroke: '#fff', 'stroke-opacity': '.10', 'stroke-width': 1 }, svg);
+    pts.forEach(function (p) { var x = X(utc(p.date)); el('line', { x1: x, x2: x, y1: Y(p.diesel) + 2.5, y2: BASE }, hatch); });
+    el('polyline', { points: line, fill: 'none', stroke: '#a7a7a7', 'stroke-width': 1.25, 'stroke-linejoin': 'round' }, svg);
+
+    // Road: ACE's published steps, broken where the schedule has no record.
+    var road = el('g', { fill: 'none', stroke: '#d4af37', 'stroke-width': 2.25 }, svg), run = [];
+    function flush() { if (run.length) el('polyline', { points: run.join(' ') }, road); run = []; }
+    segs.forEach(function (s, i) {
+      var prev = segs[i - 1];
+      if (prev && s.from - prev.to > 2 * DAY) flush();
+      var xa = X(s.from), xb = X(Math.min(s.to + DAY, x1)), y = Ys(s.bc);
+      run.push(xa.toFixed(2) + ',' + y.toFixed(2), xb.toFixed(2) + ',' + y.toFixed(2));
+    });
+    flush();
+
+    // Month mile posts along the base; each label centred in its own month.
+    el('line', { x1: 0, x2: PX, y1: BASE, y2: BASE, stroke: '#5a5a5a', 'stroke-width': 1 }, svg);
+    var posts = el('g', { stroke: '#5a5a5a', 'stroke-width': 1 }, svg), firstM = true;
+    var d0 = new Date(x0), m = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1), spans = [];
+    while (m <= x1) {
+      var md2 = new Date(m), nm = Date.UTC(md2.getUTCFullYear(), md2.getUTCMonth() + 1, 1);
+      spans.push({ m: md2, a: X(Math.max(m, x0)), b: X(Math.min(nm, x1 + DAY)), tick: m > x0 });
+      m = nm;
+    }
+    // Labels sit centred in their month; where months are too narrow, skip any label that would
+    // crowd the previous one (about 7px a character in 10.5px DM Mono with its tracking).
+    var lastR = -Infinity;
+    spans.forEach(function (s) {
+      if (s.tick) el('line', { x1: s.a, x2: s.a, y1: BASE, y2: BASE + 6 }, posts);
+      if (s.b - s.a < 12) return;
+      var yr = (firstM || s.m.getUTCMonth() === 0) ? ' ’' + String(s.m.getUTCFullYear()).slice(2) : '';
+      var label = (MONTHS[s.m.getUTCMonth()] + yr).toUpperCase(), half = label.length * 3.6, cx = Math.max((s.a + s.b) / 2, half);
+      if (cx - half < lastR + 10 || cx + half > PX + LAB - 4) return;
+      firstM = false; lastR = cx + half;
+      txt(svg, { x: cx, y: BASE + 25, 'text-anchor': 'middle', 'class': 'post' }, label);
+    });
+
+    // Ends and starts.
+    var lx = X(utc(last.date)), ly = Y(last.diesel), le = segs[segs.length - 1], rx = X(Math.min(le.to + DAY, x1)), ry = Ys(le.bc);
+    el('circle', { cx: lx, cy: ly, r: 3.5, fill: '#2c2c2c', stroke: '#e6e6e6', 'stroke-width': 1.5 }, svg);
+    el('circle', { cx: rx, cy: ry, r: 3.5, fill: '#d4af37' }, svg);
+    var gapY = ry - ly < 30 ? (30 - (ry - ly)) / 2 : 0;
+    txt(svg, { x: PX + 14, y: ly - 32 - gapY, 'class': 'ek' }, 'DIESEL');
+    txt(svg, { x: PX + 14, y: ly - 12 - gapY, 'class': 'ev' }, last.diesel.toFixed(1) + '¢');
+    txt(svg, { x: PX + 14, y: ry + 22 + gapY, 'class': 'ev gold' }, le.bc.toFixed(1) + '%');
+    txt(svg, { x: PX + 14, y: ry + 37 + gapY, 'class': 'ek' }, 'ACE BC');
+    if (PX > 360) {
+      txt(svg, { x: 10, y: Y(pts[0].diesel) - 10, 'class': 'sv' }, pts[0].diesel.toFixed(1) + '¢');
+      txt(svg, { x: 10, y: Ys(segs[0].bc) + 18, 'class': 'sv gold' }, segs[0].bc.toFixed(1) + '%');
+    }
+  }
+
+  // --- detail charts -----------------------------------------------------------
   function frame(host) {
     var W = Math.max(300, Math.round(host.clientWidth || 600));
     var narrow = W < 520;
     return {
       W: W, narrow: narrow,
-      padL: 38, padR: narrow ? 52 : 60, top: 14, plotH: narrow ? 120 : 150, axisH: 24,
+      padL: 44, padR: narrow ? 52 : 64, top: 14, plotH: narrow ? 120 : 160, axisH: 26,
       x0: utc(trendData.window.from), x1: utc(trendData.window.to)
     };
   }
@@ -424,9 +725,8 @@
     var t0 = ticks[0], tN = ticks[ticks.length - 1];
     var y = function (v) { return f.top + (1 - (v - t0) / (tN - t0)) * f.plotH; };
     ticks.forEach(function (v) {
-      el('line', { x1: f.padL, x2: f.W - f.padR, y1: y(v), y2: y(v), stroke: 'var(--grid)', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
-      var tx = el('text', { x: f.padL - 8, y: y(v) + 4, 'text-anchor': 'end', 'class': 'tick' }, svg);
-      tx.textContent = fmt(v);
+      el('line', { x1: f.padL, x2: f.W - f.padR, y1: y(v), y2: y(v), stroke: '#efefef', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+      txt(svg, { x: f.padL - 10, y: y(v) + 4, 'text-anchor': 'end', 'class': 'tick' }, fmt(v));
     });
     return y;
   }
@@ -434,8 +734,7 @@
   // Weekly points, but a tick per month - one label per week would be unreadable.
   function drawMonthAxis(svg, f) {
     var base = f.top + f.plotH;
-    el('line', { x1: f.padL, x2: f.W - f.padR, y1: base, y2: base, stroke: 'var(--border)', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
-
+    el('line', { x1: f.padL, x2: f.W - f.padR, y1: base, y2: base, stroke: '#d6d6d6', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
     var seen = {}, labels = [];
     trendData.points.forEach(function (p) {
       var ym = p.date.slice(0, 7);
@@ -443,134 +742,110 @@
       seen[ym] = 1;
       labels.push({ ym: ym, ms: utc(p.date) });
     });
-
     // Skip any label that would sit on top of the previous one - the first month's label
     // starts mid-month, so it can crowd the next one.
     var stepEvery = f.narrow ? 2 : 1, lastX = -Infinity;
     labels.forEach(function (l, i) {
       if (i % stepEvery) return;
       var x = xOf(f, l.ms), withYear = i === 0 || l.ym.slice(5) === '01';
-      if (x - lastX < (withYear ? 44 : 30)) return;
+      if (x - lastX < (withYear ? 50 : 34)) return;
       lastX = x;
-      var t = el('text', { x: x, y: base + 17, 'text-anchor': 'middle', 'class': 'tick' }, svg);
-      t.textContent = monthLabel(l.ym) + (withYear ? " '" + l.ym.slice(2, 4) : '');
+      txt(svg, { x: x, y: base + 19, 'text-anchor': 'middle', 'class': 'tick' }, (monthLabel(l.ym) + (withYear ? " ’" + l.ym.slice(2, 4) : '')).toUpperCase());
     });
   }
 
   function makeSvg(host, f, withAxis) {
     host.textContent = '';
     var H = f.top + f.plotH + (withAxis ? f.axisH : 8);
-    var svg = el('svg', { viewBox: '0 0 ' + f.W + ' ' + H, width: f.W, height: H, tabindex: 0, role: 'img' }, host);
-    return svg;
+    return el('svg', { viewBox: '0 0 ' + f.W + ' ' + H, width: f.W, height: H, tabindex: 0, role: 'img' }, host);
   }
-
-  function endDot(svg, x, y) {
-    el('circle', { cx: x, cy: y, r: 4, fill: 'var(--series-1)', stroke: 'var(--surface)', 'stroke-width': 2 }, svg);
+  function endDot(svg, x, y, color) {
+    el('circle', { cx: x, cy: y, r: 4, fill: color, stroke: '#fff', 'stroke-width': 2 }, svg);
   }
 
   function drawDiesel() {
-    var host = document.getElementById('chartDiesel'), f = frame(host);
+    var host = $('chartDiesel'), f = frame(host);
     var svg = makeSvg(host, f, false);
     svg.setAttribute('aria-label', 'BC diesel price by week; values are in the table below.');
     var pts = trendData.points.filter(function (p) { return p.diesel != null; });
     var vals = pts.map(function (p) { return p.diesel; });
     var ticks = niceTicks(Math.min.apply(null, vals), Math.max.apply(null, vals), 3);
     var y = drawGrid(svg, f, ticks, function (v) { return v + '¢'; });
-
     var d = pts.map(function (p, i) { return (i ? 'L' : 'M') + xOf(f, utc(p.date)).toFixed(1) + ' ' + y(p.diesel).toFixed(1); }).join(' ');
-    el('path', { d: d, fill: 'none', stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
-
+    el('path', { d: d, fill: 'none', stroke: '#2c2c2c', 'stroke-width': 1.75, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
     var last = pts[pts.length - 1], lx = xOf(f, utc(last.date)), ly = y(last.diesel);
-    endDot(svg, lx, ly);
-    el('text', { x: lx + 9, y: ly + 4, 'class': 'endlabel' }, svg).textContent = last.diesel.toFixed(1) + '¢';
-
+    endDot(svg, lx, ly, '#2c2c2c');
+    txt(svg, { x: lx + 10, y: ly + 4, 'class': 'endlabel' }, last.diesel.toFixed(1) + '¢');
     return { svg: svg, f: f, y: y };
   }
 
   function drawAce() {
-    var host = document.getElementById('chartAce'), f = frame(host);
+    var host = $('chartAce'), f = frame(host);
     var svg = makeSvg(host, f, true);
-    svg.setAttribute('aria-label', "ACE Courier's British Columbia fuel surcharge over time; values are in the table below.");
-
-    // Clip confirmed spans to the window.
-    var segs = trendData.ace_segments.map(function (s) {
-      return { from: Math.max(utc(s.from), f.x0), to: Math.min(utc(s.to), f.x1), start: utc(s.from), bc: s.bc };
-    }).filter(function (s) { return s.to >= f.x0 && s.from <= f.x1; });
-
+    svg.setAttribute('aria-label', 'ACE Courier’s British Columbia fuel surcharge over time; values are in the table below.');
+    var segs = clippedSegments(f.x0, f.x1);
     var vals = segs.map(function (s) { return s.bc; });
     var ticks = niceTicks(Math.min.apply(null, vals), Math.max.apply(null, vals), 3);
     var y = drawGrid(svg, f, ticks, function (v) { return v + '%'; });
-
+    var G = '#8c752e';
     segs.forEach(function (s, i) {
       var xa = xOf(f, s.from), xb = Math.max(xOf(f, s.to + DAY), xa + 2);
-      el('line', { x1: xa, x2: xb, y1: y(s.bc), y2: y(s.bc), stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linecap': 'round' }, svg);
-
+      el('line', { x1: xa, x2: xb, y1: y(s.bc), y2: y(s.bc), stroke: G, 'stroke-width': 2.25 }, svg);
       var next = segs[i + 1];
       if (next) {
         var gap = next.from - s.to;
         if (gap <= 2 * DAY) {
           // Contiguous: a riser shows the step change.
-          el('line', { x1: xb, x2: xb, y1: y(s.bc), y2: y(next.bc), stroke: 'var(--series-1)', 'stroke-width': 2, 'stroke-linecap': 'round' }, svg);
+          el('line', { x1: xb, x2: xb, y1: y(s.bc), y2: y(next.bc), stroke: G, 'stroke-width': 2.25 }, svg);
         } else {
           var gx0 = xb, gx1 = xOf(f, next.from);
-          if (gx1 - gx0 > 84) {
-            var gl = el('text', { x: (gx0 + gx1) / 2, y: (y(s.bc) + y(next.bc)) / 2 + 4, 'text-anchor': 'middle', 'class': 'gaplabel' }, svg);
-            gl.textContent = 'no record';
-          }
+          if (gx1 - gx0 > 84) txt(svg, { x: (gx0 + gx1) / 2, y: (y(s.bc) + y(next.bc)) / 2 + 4, 'text-anchor': 'middle', 'class': 'gaplabel' }, 'no record');
         }
       }
     });
-
     // Mark a span's start only where it follows a gap - contiguous changes already read
     // from their risers, and a dot on every weekly change is clutter.
     segs.forEach(function (s, i) {
       var prev = segs[i - 1];
-      var afterGap = !prev || s.from - prev.to > 2 * DAY;
-      if (s.start >= f.x0 && afterGap) endDot(svg, xOf(f, s.start), y(s.bc));
+      if (s.start >= f.x0 && (!prev || s.from - prev.to > 2 * DAY)) endDot(svg, xOf(f, s.start), y(s.bc), G);
     });
-
     var last = segs[segs.length - 1];
     if (last) {
       var ex = xOf(f, last.to + DAY), ey = y(last.bc);
-      endDot(svg, ex, ey);
-      el('text', { x: ex + 9, y: ey + 4, 'class': 'endlabel' }, svg).textContent = last.bc.toFixed(1) + '%';
+      endDot(svg, ex, ey, G);
+      txt(svg, { x: ex + 10, y: ey + 4, 'class': 'endlabel g' }, last.bc.toFixed(1) + '%');
     }
-
     drawMonthAxis(svg, f);
     return { svg: svg, f: f, y: y };
   }
 
   var charts = [];
-
-  function showIndex(i, anchorChart, clientX) {
+  function showIndex(i, anchorChart) {
     var pts = trendData.points;
     if (i < 0 || i >= pts.length) return hideTip();
     trendState.index = i;
     var m = pts[i], ms = utc(m.date);
-
     charts.forEach(function (c) {
-      if (!c.cross) c.cross = el('line', { stroke: 'var(--muted)', 'stroke-width': 1, 'shape-rendering': 'crispEdges', 'pointer-events': 'none' }, c.svg);
+      if (!c.cross) c.cross = el('line', { stroke: '#9a9a9a', 'stroke-width': 1, 'shape-rendering': 'crispEdges', 'pointer-events': 'none' }, c.svg);
       var x = xOf(c.f, ms);
       c.cross.setAttribute('x1', x); c.cross.setAttribute('x2', x);
       c.cross.setAttribute('y1', c.f.top); c.cross.setAttribute('y2', c.f.top + c.f.plotH);
       c.cross.style.display = '';
     });
-
-    var tip = document.getElementById('trendTip');
+    var tip = $('trendTip');
     tip.textContent = '';
     var head = document.createElement('div'); head.className = 'tip-head'; head.textContent = 'Week ending ' + fmtDate(m.date); tip.appendChild(head);
-    function row(value, label) {
-      var r = document.createElement('div'); r.className = 'row';
-      var k = document.createElement('span'); k.className = 'key'; r.appendChild(k);
+    function row(value, label, gold) {
+      var r = document.createElement('div'); r.className = 'tip-row';
+      var k = document.createElement('span'); k.className = 'key' + (gold ? ' g' : ''); r.appendChild(k);
       var v = document.createElement('span'); v.className = 'val'; v.textContent = value; r.appendChild(v);
       var l = document.createElement('span'); l.className = 'lbl'; l.textContent = label; r.appendChild(l);
       tip.appendChild(r);
     }
     row(m.diesel != null ? m.diesel.toFixed(1) + '¢/L' : '—', 'Diesel, BC average');
-    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge, week avg');
+    row(m.ace_bc != null ? m.ace_bc.toFixed(1) + '%' : 'no record', 'ACE BC surcharge, week avg', true);
     tip.hidden = false;
-
-    // Position beside the crosshair, inside the card.
+    // Position beside the crosshair, inside the panel.
     var card = tip.parentNode.getBoundingClientRect();
     var svgBox = anchorChart.svg.getBoundingClientRect();
     var scale = svgBox.width / anchorChart.f.W;
@@ -580,12 +855,10 @@
     tip.style.left = Math.max(8, left) + 'px';
     tip.style.top = (svgBox.top - card.top + anchorChart.f.top * scale) + 'px';
   }
-
   function hideTip() {
-    document.getElementById('trendTip').hidden = true;
+    $('trendTip').hidden = true;
     charts.forEach(function (c) { if (c.cross) c.cross.style.display = 'none'; });
   }
-
   function nearestIndex(c, clientX) {
     var box = c.svg.getBoundingClientRect();
     var x = (clientX - box.left) * (c.f.W / box.width);
@@ -596,13 +869,10 @@
     });
     return best;
   }
-
   function wire(c) {
     c.svg.addEventListener('pointermove', function (e) { showIndex(nearestIndex(c, e.clientX), c); });
     c.svg.addEventListener('pointerleave', hideTip);
-    c.svg.addEventListener('focus', function () {
-      showIndex(trendState.index >= 0 ? trendState.index : trendData.points.length - 1, c);
-    });
+    c.svg.addEventListener('focus', function () { showIndex(trendState.index >= 0 ? trendState.index : trendData.points.length - 1, c); });
     c.svg.addEventListener('blur', hideTip);
     c.svg.addEventListener('keydown', function (e) {
       var i = trendState.index >= 0 ? trendState.index : trendData.points.length - 1;
@@ -611,8 +881,8 @@
       if (e.key === 'Escape') hideTip();
     });
   }
-
   function drawTrend() {
+    drawHero();
     charts = [drawDiesel(), drawAce()];
     charts.forEach(wire);
   }
@@ -620,29 +890,33 @@
   function renderTrend(t) {
     if (!t || !t.points || !t.points.length || !t.ace_segments || !t.ace_segments.length) return;
     trendData = t;
-    document.getElementById('trend').hidden = false;
+    $('trend').hidden = false;
+    $('heroLegend').hidden = false;
+    $('heroFig').textContent = 'Fig. A  ·  ' + t.points.length + ' weeks  ·  ' +
+      monthLabel(t.window.from.slice(0, 7), true) + ' – ' + monthLabel(t.window.to.slice(0, 7), true);
     drawTrend();
 
-    var corr = document.getElementById('corr'), c = t.correlation;
+    var corr = $('corr'), c = t.correlation;
     corr.textContent = '';
     if (c && c.r != null) {
       var strength = Math.abs(c.r) >= 0.8 ? 'closely' : Math.abs(c.r) >= 0.5 ? 'moderately' : 'only loosely';
       var since = c.from ? ' since ' + fmtDate(c.from) : '';
-      corr.appendChild(document.createTextNode("Across the " + c.n + " weeks" + since + " with ACE's rate on record, ACE's average BC surcharge moved " + strength + " with that week's BC diesel price "));
+      corr.appendChild(document.createTextNode('Across the ' + c.n + ' weeks' + since + ' with ACE’s rate on record, ACE’s average BC surcharge moved ' + strength + ' with that week’s BC diesel price '));
       var s = document.createElement('strong'); s.textContent = '(correlation ' + c.r.toFixed(2) + ')'; corr.appendChild(s);
       corr.appendChild(document.createTextNode(c.n < 8 ? '. With this few weeks on record, treat it as indicative.' : '.'));
+      $('corrR').textContent = c.r.toFixed(2);
+      $('corrN').textContent = c.n + ' weeks';
+      $('corrText').textContent = 'Correlation of ACE’s BC surcharge with the same week’s average BC diesel price, ' +
+        monthLabel(t.window.from.slice(0, 7), true) + ' to ' + monthLabel(t.window.to.slice(0, 7), true) + '.' +
+        (c.n < 8 ? ' Indicative only, with few weeks on record.' : '');
     }
 
     var tb = document.querySelector('#trendTable tbody');
     tb.textContent = '';
     t.points.slice().reverse().forEach(function (p) {
       var tr = document.createElement('tr');
-      [fmtDate(p.date),
-       p.diesel != null ? p.diesel.toFixed(1) : '—',
-       p.ace_bc != null ? p.ace_bc.toFixed(1) + '%' : 'no record'
-      ].forEach(function (v, i) {
-        var td = document.createElement('td'); td.textContent = v; if (i) td.className = 'num'; tr.appendChild(td);
-      });
+      [fmtDate(p.date), p.diesel != null ? p.diesel.toFixed(1) : '—', p.ace_bc != null ? p.ace_bc.toFixed(1) + '%' : 'no record']
+        .forEach(function (v, i) { var td = document.createElement('td'); td.textContent = v; if (i) td.className = 'num'; tr.appendChild(td); });
       tb.appendChild(tr);
     });
 
@@ -658,14 +932,10 @@
       var dv = dieselForDate(s.from);
       var tr = document.createElement('tr');
       [fmtDate(s.from), s.bc.toFixed(1) + '%', dv != null ? dv.toFixed(1) + '¢' : '—', fmtDate(s.to)]
-        .forEach(function (v, i) {
-          var td = document.createElement('td'); td.textContent = v; if (i === 1 || i === 2) td.className = 'num'; tr.appendChild(td);
-        });
+        .forEach(function (v, i) { var td = document.createElement('td'); td.textContent = v; if (i === 1 || i === 2) td.className = 'num'; tr.appendChild(td); });
       cb.appendChild(tr);
     });
-
-    document.getElementById('trendSource').textContent =
-      'Sources: ' + t.sources.diesel + '; ' + t.sources.ace + '.';
+    $('trendSource').textContent = 'Sources: ' + t.sources.diesel + '; ' + t.sources.ace + '.';
   }
 
   var resizeTimer;
@@ -674,6 +944,8 @@
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(function () { hideTip(); drawTrend(); }, 120);
   });
+  // Web fonts change the caption's size, which the hero's collision check measures.
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { if (trendData) drawHero(); });
 
   function loadScript(src, onload, onerror) {
     var s = document.createElement('script');
