@@ -206,20 +206,26 @@ function Get-FscAce {
     $url = 'https://www.acecourier.ca/faq/'
     $t   = Get-PageText $url
 
+    # The FAQ is typed by hand and has carried stray spaces inside a number ("6 9.2 %"
+    # on 2026-11-04), so allow them and strip them back out before parsing.
+    $num = '\d[\d ]*(?:\.[\d ]*\d)?'
+    function ConvertTo-Pct { param([string] $Text) [double]($Text -replace '\s', '') }
+
     $pattern = 'Effective\s+(?<d>[A-Za-z]+\s+\d{1,2},?\s+\d{4}).{0,120}?Fuel Surcharge rates are\s*' +
-               '(?<bc>\d+(?:\.\d+)?)\s*%?\s*for British Columbia\s*and\s*(?<ab>\d+(?:\.\d+)?)\s*%?\s*for Alberta'
+               "(?<bc>$num)\s*%?\s*for British Columbia\s*and\s*(?<ab>$num)\s*%?\s*for Alberta"
     $m = [regex]::Match($t, $pattern, $script:RxOpts)
     Assert-Match $m 'ACE Courier' 'the BC/Alberta fuel surcharge sentence'
 
     $from = ConvertTo-IsoDate $m.Groups['d'].Value
 
-    New-FscRecord -Carrier 'ACE Courier' -Service 'British Columbia' -Segment 'ace' -Percent ([double]$m.Groups['bc'].Value) -From $from -Source $url
+    New-FscRecord -Carrier 'ACE Courier' -Service 'British Columbia' -Segment 'ace' -Percent (ConvertTo-Pct $m.Groups['bc'].Value) -From $from -Source $url
     # The FAQ also gives an Alberta rate; the board compares BC rates only.
 
-    $f = [regex]::Match($t, 'FTL\s*/\s*Direct Drive FSC is\s*(?<v>\d+(?:\.\d+)?)\s*%', $script:RxOpts)
-    if ($f.Success) {
-        New-FscRecord -Carrier 'ACE Courier' -Service 'FTL / Direct Drive' -Segment 'ace' -Percent ([double]$f.Groups['v'].Value) -From $from -Source $url
-    }
+    # Every competitor's truckload rate is measured against this one, so losing it
+    # silently would strip the comparison from half the board.
+    $f = [regex]::Match($t, "FTL\s*/\s*Direct Drive FSC is\s*(?<v>$num)\s*%", $script:RxOpts)
+    Assert-Match $f 'ACE Courier' 'the FTL / Direct Drive rate'
+    New-FscRecord -Carrier 'ACE Courier' -Service 'FTL / Direct Drive' -Segment 'ace' -Percent (ConvertTo-Pct $f.Groups['v'].Value) -From $from -Source $url
 }
 
 # Comox Pacific and Overland West run the same website platform, which shows the current
