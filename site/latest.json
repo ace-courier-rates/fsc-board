@@ -1,14 +1,29 @@
 {
-  "generated_at": "2026-11-04T19:27:30.3570629Z",
+  "generated_at": "2026-11-04T19:39:23.8647245Z",
   "generated_date": "2026-11-04",
   "ace_benchmark": 54.2,
-  "ok_count": 11,
+  "ok_count": 12,
   "rates": [
     {
       "carrier": "ACE Courier",
       "service": "British Columbia",
       "segment": "ace",
       "percent": 54.2,
+      "effective_from": "2026-11-04",
+      "effective_to": "",
+      "status": "ok",
+      "source": "https://www.acecourier.ca/faq/",
+      "note": null,
+      "delta_points": null,
+      "delta_percent": null,
+      "benchmark": null,
+      "benchmark_date": null
+    },
+    {
+      "carrier": "ACE Courier",
+      "service": "FTL / Direct Drive",
+      "segment": "ace",
+      "percent": 69.2,
       "effective_from": "2026-11-04",
       "effective_to": "",
       "status": "ok",
@@ -44,9 +59,9 @@
       "status": "ok",
       "source": "https://www.comoxpacific.com/",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
+      "delta_points": 16.7,
+      "delta_percent": 24.1,
+      "benchmark": "ACE FTL / Direct Drive",
       "benchmark_date": null
     },
     {
@@ -74,9 +89,9 @@
       "status": "ok",
       "source": "https://www.overlandwest.ca/",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
+      "delta_points": 40.6,
+      "delta_percent": 58.7,
+      "benchmark": "ACE FTL / Direct Drive",
       "benchmark_date": null
     },
     {
@@ -104,9 +119,9 @@
       "status": "ok",
       "source": "https://hi-way9.com/fuel-surcharge/",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
+      "delta_points": 20.16,
+      "delta_percent": 29.1,
+      "benchmark": "ACE FTL / Direct Drive",
       "benchmark_date": null
     },
     {
@@ -134,9 +149,9 @@
       "status": "ok",
       "source": "https://www.steelesgroup.com/get-a-quote/fuel-surcharge/",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
+      "delta_points": 42.4,
+      "delta_percent": 61.3,
+      "benchmark": "ACE FTL / Direct Drive",
       "benchmark_date": null
     },
     {
@@ -164,9 +179,9 @@
       "status": "ok",
       "source": "https://www.grimshaw-trucking.com/news",
       "note": null,
-      "delta_points": null,
-      "delta_percent": null,
-      "benchmark": null,
+      "delta_points": 39.3,
+      "delta_percent": 56.8,
+      "benchmark": "ACE FTL / Direct Drive",
       "benchmark_date": null
     },
     {
