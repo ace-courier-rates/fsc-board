@@ -589,6 +589,20 @@
     for (var v = lo; v <= hi + step / 1e6; v += step) out.push(Math.round(v * 1e6) / 1e6);
     return out;
   }
+  // ACE's surcharge as a step line: flat runs and plumb risers only, on whole pixels. Each rate
+  // runs until the next one starts - the schedule sometimes lists the change day under both
+  // rates or skips a day - and a gap of more than two days breaks the line.
+  function stepPath(segs, xAt, yAt, xMax) {
+    var d = '', open = false;
+    segs.forEach(function (s, i) {
+      var next = segs[i + 1], joined = !!next && next.from - s.to <= 2 * DAY;
+      var xa = Math.round(xAt(s.from)), yv = Math.round(yAt(s.bc));
+      var xb = Math.max(Math.round(xAt(joined ? next.from : Math.min(s.to + DAY, xMax))), xa + 1);
+      d += (open ? 'V' : 'M' + xa + ' ') + yv + 'H' + xb;
+      open = joined;
+    });
+    return d;
+  }
   function clippedSegments(x0, x1) {
     return trendData.ace_segments.map(function (s) {
       return { from: Math.max(utc(s.from), x0), to: Math.min(utc(s.to), x1), start: utc(s.from), bc: s.bc };
@@ -655,26 +669,21 @@
     el('stop', { offset: 0, 'stop-color': '#fff', 'stop-opacity': '.075' }, lg);
     el('stop', { offset: 1, 'stop-color': '#fff', 'stop-opacity': '.015' }, lg);
 
-    var line = pts.map(function (p) { return X(utc(p.date)).toFixed(2) + ',' + Y(p.diesel).toFixed(2); }).join(' ');
-    el('polygon', { points: X(utc(pts[0].date)).toFixed(2) + ',' + BASE + ' ' + line + ' ' + X(utc(last.date)).toFixed(2) + ',' + BASE, fill: 'url(#ridgeFill)' }, svg);
-    var hatch = el('g', { stroke: '#fff', 'stroke-opacity': '.10', 'stroke-width': 1 }, svg);
-    pts.forEach(function (p) { var x = X(utc(p.date)); el('line', { x1: x, x2: x, y1: Y(p.diesel) + 2.5, y2: BASE }, hatch); });
+    // One stem per weekly reading, each on a whole pixel (+0.5 centres a 1px line) so it renders
+    // as a single crisp, plumb line; the ridge's vertices sit on the same x so stems meet it exactly.
+    function SX(ms) { return Math.round(X(ms)) + 0.5; }
+    var line = pts.map(function (p) { return SX(utc(p.date)) + ',' + Y(p.diesel).toFixed(2); }).join(' ');
+    el('polygon', { points: SX(utc(pts[0].date)) + ',' + BASE + ' ' + line + ' ' + SX(utc(last.date)) + ',' + BASE, fill: 'url(#ridgeFill)' }, svg);
+    var hatch = el('g', { stroke: '#fff', 'stroke-opacity': '.10', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    pts.forEach(function (p) { var x = SX(utc(p.date)); el('line', { x1: x, x2: x, y1: Math.round(Y(p.diesel) + 3), y2: BASE }, hatch); });
     el('polyline', { points: line, fill: 'none', stroke: '#a7a7a7', 'stroke-width': 1.25, 'stroke-linejoin': 'round' }, svg);
 
-    // Road: ACE's published steps, broken where the schedule has no record.
-    var road = el('g', { fill: 'none', stroke: '#d4af37', 'stroke-width': 2.25 }, svg), run = [];
-    function flush() { if (run.length) el('polyline', { points: run.join(' ') }, road); run = []; }
-    segs.forEach(function (s, i) {
-      var prev = segs[i - 1];
-      if (prev && s.from - prev.to > 2 * DAY) flush();
-      var xa = X(s.from), xb = X(Math.min(s.to + DAY, x1)), y = Ys(s.bc);
-      run.push(xa.toFixed(2) + ',' + y.toFixed(2), xb.toFixed(2) + ',' + y.toFixed(2));
-    });
-    flush();
+    // Road: ACE's published steps as a true step line, broken where the schedule has no record.
+    el('path', { d: stepPath(segs, X, Ys, x1), fill: 'none', stroke: '#d4af37', 'stroke-width': 2, 'shape-rendering': 'crispEdges' }, svg);
 
     // Month mile posts along the base; each label centred in its own month.
-    el('line', { x1: 0, x2: PX, y1: BASE, y2: BASE, stroke: '#5a5a5a', 'stroke-width': 1 }, svg);
-    var posts = el('g', { stroke: '#5a5a5a', 'stroke-width': 1 }, svg), firstM = true;
+    el('line', { x1: 0, x2: PX, y1: BASE + 0.5, y2: BASE + 0.5, stroke: '#5a5a5a', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg);
+    var posts = el('g', { stroke: '#5a5a5a', 'stroke-width': 1, 'shape-rendering': 'crispEdges' }, svg), firstM = true;
     var d0 = new Date(x0), m = Date.UTC(d0.getUTCFullYear(), d0.getUTCMonth(), 1), spans = [];
     while (m <= x1) {
       var md2 = new Date(m), nm = Date.UTC(md2.getUTCFullYear(), md2.getUTCMonth() + 1, 1);
@@ -685,7 +694,7 @@
     // crowd the previous one (about 7px a character in 10.5px DM Mono with its tracking).
     var lastR = -Infinity;
     spans.forEach(function (s) {
-      if (s.tick) el('line', { x1: s.a, x2: s.a, y1: BASE, y2: BASE + 6 }, posts);
+      if (s.tick) { var tx = Math.round(s.a) + 0.5; el('line', { x1: tx, x2: tx, y1: BASE, y2: BASE + 6 }, posts); }
       if (s.b - s.a < 12) return;
       var yr = (firstM || s.m.getUTCMonth() === 0) ? ' ’' + String(s.m.getUTCFullYear()).slice(2) : '';
       var label = (MONTHS[s.m.getUTCMonth()] + yr).toUpperCase(), half = label.length * 3.6, cx = Math.max((s.a + s.b) / 2, half);
@@ -695,7 +704,7 @@
     });
 
     // Ends and starts.
-    var lx = X(utc(last.date)), ly = Y(last.diesel), le = segs[segs.length - 1], rx = X(Math.min(le.to + DAY, x1)), ry = Ys(le.bc);
+    var lx = SX(utc(last.date)), ly = Y(last.diesel), le = segs[segs.length - 1], rx = Math.round(X(Math.min(le.to + DAY, x1))), ry = Math.round(Ys(le.bc));
     el('circle', { cx: lx, cy: ly, r: 3.5, fill: '#2c2c2c', stroke: '#e6e6e6', 'stroke-width': 1.5 }, svg);
     el('circle', { cx: rx, cy: ry, r: 3.5, fill: '#d4af37' }, svg);
     var gapY = ry - ly < 30 ? (30 - (ry - ly)) / 2 : 0;
@@ -788,30 +797,24 @@
     var ticks = niceTicks(Math.min.apply(null, vals), Math.max.apply(null, vals), 3);
     var y = drawGrid(svg, f, ticks, function (v) { return v + '%'; });
     var G = '#8c752e';
+    function xAt(ms) { return xOf(f, ms); }
+    el('path', { d: stepPath(segs, xAt, y, f.x1 + DAY), fill: 'none', stroke: G, 'stroke-width': 2, 'shape-rendering': 'crispEdges' }, svg);
     segs.forEach(function (s, i) {
-      var xa = xOf(f, s.from), xb = Math.max(xOf(f, s.to + DAY), xa + 2);
-      el('line', { x1: xa, x2: xb, y1: y(s.bc), y2: y(s.bc), stroke: G, 'stroke-width': 2.25 }, svg);
       var next = segs[i + 1];
-      if (next) {
-        var gap = next.from - s.to;
-        if (gap <= 2 * DAY) {
-          // Contiguous: a riser shows the step change.
-          el('line', { x1: xb, x2: xb, y1: y(s.bc), y2: y(next.bc), stroke: G, 'stroke-width': 2.25 }, svg);
-        } else {
-          var gx0 = xb, gx1 = xOf(f, next.from);
-          if (gx1 - gx0 > 84) txt(svg, { x: (gx0 + gx1) / 2, y: (y(s.bc) + y(next.bc)) / 2 + 4, 'text-anchor': 'middle', 'class': 'gaplabel' }, 'no record');
-        }
+      if (next && next.from - s.to > 2 * DAY) {
+        var gx0 = xOf(f, s.to + DAY), gx1 = xOf(f, next.from);
+        if (gx1 - gx0 > 84) txt(svg, { x: (gx0 + gx1) / 2, y: (y(s.bc) + y(next.bc)) / 2 + 4, 'text-anchor': 'middle', 'class': 'gaplabel' }, 'no record');
       }
     });
     // Mark a span's start only where it follows a gap - contiguous changes already read
     // from their risers, and a dot on every weekly change is clutter.
     segs.forEach(function (s, i) {
       var prev = segs[i - 1];
-      if (s.start >= f.x0 && (!prev || s.from - prev.to > 2 * DAY)) endDot(svg, xOf(f, s.start), y(s.bc), G);
+      if (s.start >= f.x0 && (!prev || s.from - prev.to > 2 * DAY)) endDot(svg, Math.round(xOf(f, s.start)), Math.round(y(s.bc)), G);
     });
     var last = segs[segs.length - 1];
     if (last) {
-      var ex = xOf(f, last.to + DAY), ey = y(last.bc);
+      var ex = Math.round(xOf(f, last.to + DAY)), ey = Math.round(y(last.bc));
       endDot(svg, ex, ey, G);
       txt(svg, { x: ex + 10, y: ey + 4, 'class': 'endlabel g' }, last.bc.toFixed(1) + '%');
     }
