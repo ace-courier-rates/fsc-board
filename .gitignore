@@ -21,3 +21,6 @@ desktop.ini
 
 # Local screenshots of the dashboard (may show the internal view)
 preview-screenshot*.png
+
+# Internal handoff notes - names email sources and local-only carriers
+HANDOFF.md
