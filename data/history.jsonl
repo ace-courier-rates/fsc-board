@@ -238,3 +238,7 @@
 {"carrier":"Overland West Freight Lines","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":109.8,"effective_from":"2026-11-06","effective_to":"","status":"ok","recorded_at":"2026-11-06T14:16:08.4537721Z"}
 {"carrier":"Overland West Freight Lines","service":"LTL, under 10,000 lb","segment":"ltl","percent":67.4,"effective_from":"2026-11-09","effective_to":"","status":"upcoming","recorded_at":"2026-11-06T14:16:08.4537721Z"}
 {"carrier":"Overland West Freight Lines","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":103.0,"effective_from":"2026-11-09","effective_to":"","status":"upcoming","recorded_at":"2026-11-06T14:16:08.4537721Z"}
+{"carrier":"ACE Courier","service":"British Columbia","segment":"ace","percent":54.2,"effective_from":"2026-11-09","effective_to":"","status":"ok","recorded_at":"2026-11-09T16:47:27.9216416Z"}
+{"carrier":"ACE Courier","service":"FTL / Direct Drive","segment":"ace","percent":69.2,"effective_from":"2026-11-09","effective_to":"","status":"ok","recorded_at":"2026-11-09T16:47:27.9216416Z"}
+{"carrier":"Hi-Way 9 Express","service":"LTL, under 10,000 lb","segment":"ltl","percent":59.43,"effective_from":"2026-11-09","effective_to":"","status":"ok","recorded_at":"2026-11-09T16:47:27.9216416Z"}
+{"carrier":"Hi-Way 9 Express","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":91.43,"effective_from":"2026-11-09","effective_to":"","status":"ok","recorded_at":"2026-11-09T16:47:27.9216416Z"}
