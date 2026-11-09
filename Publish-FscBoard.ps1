@@ -105,9 +105,40 @@ if (Test-Path -LiteralPath $MsgFolder) {
 # --ff-only pull, and the cloud run needs it anyway to redraw the chart.
 $historyDirty = (Invoke-Git status --porcelain -- $history).Output.Trim().Length -gt 0
 
-# 3. Scrape
-try { & (Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1') -NoHistory -PublicSnapshotPath $snapshot | Out-Null }
+# 3. ACE's billing-system rate, if this PC is set up to read it. data/billing-check.json
+# (gitignored) names the script; it writes data/billing-fsc.json. Any failure leaves the
+# board on the FAQ figure alone.
+$billingOut  = 'data/billing-fsc.json'
+$billingConf = Join-Path $PSScriptRoot 'data\billing-check.json'
+$scrapeArgs  = @{ NoHistory = $true; PublicSnapshotPath = $snapshot }
+if (Test-Path -LiteralPath $billingConf) {
+    $scrapeArgs.BillingCheck = $billingOut
+    $billingFull = Join-Path $PSScriptRoot $billingOut
+    Remove-Item -LiteralPath $billingFull -ErrorAction SilentlyContinue
+    try {
+        $checker = (Get-Content -LiteralPath $billingConf -Raw | ConvertFrom-Json).script
+        if (-not (Test-Path -LiteralPath $checker)) { throw "checker script not found: $checker" }
+        & $checker -OutFile $billingFull | Out-Null
+    }
+    catch { Write-RunLog "billing check failed - $($_.Exception.Message)" }
+}
+
+# 4. Scrape
+try { & (Join-Path $PSScriptRoot 'Get-FuelSurcharges.ps1') @scrapeArgs | Out-Null }
 catch { Write-RunLog "scrape failed - $($_.Exception.Message)"; return }
+
+if ($scrapeArgs.BillingCheck) {
+    try {
+        $bcheck = (Get-Content (Join-Path $PSScriptRoot 'data\latest.json') -Raw | ConvertFrom-Json).billing_check
+        $nextNote = if ($bcheck.next) { "; next $($bcheck.next.percent) from $($bcheck.next.effective_from)" } else { '' }
+        switch ($bcheck.status) {
+            'match'    { Write-RunLog "billing check: BC $($bcheck.percent) since $($bcheck.effective_from) matches the FAQ$nextNote" }
+            'override' { Write-RunLog "billing check: OVERRIDE - billing BC $($bcheck.percent) since $($bcheck.effective_from), FAQ shows $($bcheck.faq)$nextNote" }
+            default    { Write-RunLog "billing check: not used - $($bcheck.detail)" }
+        }
+    }
+    catch { Write-RunLog "billing check: could not read the result - $($_.Exception.Message)" }
+}
 
 # Diesel trend for the local dashboard only; the cloud run owns the committed copy.
 try { & (Join-Path $PSScriptRoot 'Get-FuelTrend.ps1') -LocalOnly | Out-Null }

@@ -33,10 +33,18 @@
     to scrape here - used in the cloud, where some carrier sites block requests, with the snapshot
     this PC publishes. Borrowed rows are used only while the rate is still in effect.
 
+.PARAMETER BillingCheck
+    Local only. A JSON file (relative to this script) holding the BC surcharge ACE's own
+    billing system applies today: { date, percent, effective_from, next }. When it differs
+    from the FAQ figure, the FAQ is read once more; if it still differs, the board uses the
+    billing rate for ACE British Columbia and marks the row "override", which the cloud run
+    then prefers over its own FAQ scrape. Produced on this PC only; see HANDOFF.md.
+
 .EXAMPLE
     .\Get-FuelSurcharges.ps1
     .\Get-FuelSurcharges.ps1 -Verbose
     .\Get-FuelSurcharges.ps1 -FallbackSnapshot data/local-public.json
+    .\Get-FuelSurcharges.ps1 -BillingCheck data/billing-fsc.json
 #>
 [CmdletBinding()]
 param(
@@ -44,7 +52,8 @@ param(
     [int]    $StaleAfterDays = 14,
     [switch] $NoHistory,
     [string] $PublicSnapshotPath,
-    [string] $FallbackSnapshot
+    [string] $FallbackSnapshot,
+    [string] $BillingCheck
 )
 
 $ErrorActionPreference = 'Stop'
@@ -203,8 +212,11 @@ function Assert-Match {
 #------------------------------------------------------------------------------
 
 function Get-FscAce {
+    # -Refetch adds a throwaway query string so a cached copy of the page can't answer.
+    param([switch] $Refetch)
     $url = 'https://www.acecourier.ca/faq/'
-    $t   = Get-PageText $url
+    $get = if ($Refetch) { $url + '?refetch=' + [DateTime]::UtcNow.Ticks } else { $url }
+    $t   = Get-PageText $get
 
     # The FAQ is typed by hand and has carried stray spaces inside a number ("6 9.2 %"
     # on 2026-11-04), so allow them and strip them back out before parsing.
@@ -429,6 +441,62 @@ foreach ($name in $adapters.Keys) {
 
 $now = (Get-Date).ToUniversalTime()
 
+# ACE's own billing system, read on this PC (see -BillingCheck). It is what customers are
+# actually charged, so when the FAQ disagrees with it, the FAQ is the one that's behind.
+$billingStatus = $null
+if ($BillingCheck) {
+    $billPath   = Join-Path $PSScriptRoot $BillingCheck
+    $todayLocal = (Get-Date).ToString('yyyy-MM-dd')
+    $bill = $null
+    if (Test-Path $billPath) {
+        try { $bill = Get-Content $billPath -Raw | ConvertFrom-Json } catch { }
+    }
+    if (-not $bill -or [string]$bill.date -ne $todayLocal -or -not ([double]$bill.percent -gt 0)) {
+        $billingStatus = [pscustomobject]@{ status = 'unavailable'; detail = "no billing-system reading for $todayLocal" }
+    }
+    else {
+        $billPct  = [math]::Round([double]$bill.percent, 2)
+        $billFrom = if ($bill.effective_from) { [string]$bill.effective_from } else { $null }
+        $since    = if ($billFrom) { " since $billFrom" } else { " (unchanged for $($bill.lookback_days)+ days)" }
+        $nextText = if ($bill.next) { " Next rate already keyed in: $($bill.next.percent)% from $($bill.next.effective_from)." } else { '' }
+
+        $findBc = { $records | Where-Object { $_.carrier -eq 'ACE Courier' -and $_.service -eq 'British Columbia' -and $_.status -eq 'ok' } | Select-Object -First 1 }
+        $bc     = & $findBc
+        $faqWas = if ($bc) { "$($bc.percent)% (effective $($bc.effective_from))" } else { 'nothing (scrape failed)' }
+
+        # Secondary fetch: the first read may have come from a cached page.
+        if ($bc -and [math]::Abs($bc.percent - $billPct) -ge 0.005) {
+            try {
+                $again = @(Get-FscAce -Refetch)
+                foreach ($old in @($records | Where-Object { $_.carrier -eq 'ACE Courier' -and $_.status -eq 'ok' })) { [void]$records.Remove($old) }
+                foreach ($r in $again) { $records.Add($r) }
+                $bc     = & $findBc
+                $faqWas = "$($bc.percent)% (effective $($bc.effective_from))"
+            }
+            catch { Write-Warning "ACE Courier - FAQ re-fetch failed: $($_.Exception.Message)" }
+        }
+
+        if ($bc -and [math]::Abs($bc.percent - $billPct) -lt 0.005) {
+            $bc.note = "Matches ACE's billing system: $billPct%$since.$nextText"
+            $billingStatus = [pscustomobject]@{ status = 'match'; percent = $billPct; effective_from = $billFrom; faq = $faqWas; next = $bill.next }
+        }
+        else {
+            $note = "ACE's billing system charges $billPct%$since, but the acecourier.ca FAQ shows $faqWas. The board uses the billing rate.$nextText"
+            $from = if ($billFrom) { $billFrom } else { $todayLocal }
+            if ($bc) {
+                $bc.percent = $billPct; $bc.effective_from = $from; $bc.note = $note
+            }
+            else {
+                $bc = New-FscRecord -Carrier 'ACE Courier' -Service 'British Columbia' -Segment 'ace' -Percent $billPct -From $from -Source 'https://www.acecourier.ca/faq/' -Note $note
+                $records.Add($bc)
+            }
+            $bc | Add-Member -NotePropertyName 'override' -NotePropertyValue $true -Force
+            $billingStatus = [pscustomobject]@{ status = 'override'; percent = $billPct; effective_from = $from; faq = $faqWas; next = $bill.next }
+            Write-Warning "ACE Courier - $note"
+        }
+    }
+}
+
 # Borrow rows for carriers that failed here from another machine's public snapshot,
 # but only while the borrowed rate is still in effect. A row with an end date is valid
 # through that date; a row without one is valid if the snapshot is under 3 days old.
@@ -487,6 +555,26 @@ if ($FallbackSnapshot) {
             if ($row.benchmark_date) { $rec | Add-Member -NotePropertyName 'benchmark_date' -NotePropertyValue $row.benchmark_date }
             $records.Add($rec)
             Write-Host "$($row.carrier) - reported rate as of $($row.effective_from) from $FallbackSnapshot"
+        }
+    }
+
+    # The local run checks ACE's BC rate against ACE's billing system and marks the row
+    # "override" when the FAQ is behind. That outranks this run's own FAQ read for 30
+    # hours, unless the FAQ has since posted a rate dated after the check.
+    if (Test-Path $fbPath) {
+        $ovr = @($fb.rates | Where-Object { $_.carrier -eq 'ACE Courier' -and $_.service -eq 'British Columbia' -and $_.override }) | Select-Object -First 1
+        if ($ovr -and $null -ne $fbAge -and $fbAge -le 1.25) {
+            $mine     = $records | Where-Object { $_.carrier -eq 'ACE Courier' -and $_.service -eq 'British Columbia' -and $_.status -eq 'ok' } | Select-Object -First 1
+            $faqNewer = $mine -and [string]::CompareOrdinal([string]$mine.effective_from, [string]$fb.generated_date) -gt 0
+            if (-not $faqNewer -and (-not $mine -or [math]::Abs($mine.percent - [double]$ovr.percent) -ge 0.005)) {
+                if ($mine) { [void]$records.Remove($mine) }
+                $rec = New-FscRecord -Carrier 'ACE Courier' -Service 'British Columbia' -Segment 'ace' -Percent ([double]$ovr.percent) `
+                                     -From $ovr.effective_from -Source $ovr.source `
+                                     -Note ("ACE billing-system rate from the local check of " + $fb.generated_date + "; the FAQ hasn't caught up.")
+                $rec | Add-Member -NotePropertyName 'override' -NotePropertyValue $true
+                $records.Add($rec)
+                Write-Host "ACE Courier - British Columbia $($ovr.percent)% from the local billing check ($($fb.generated_date))"
+            }
         }
     }
 }
@@ -556,6 +644,7 @@ $snapshot = [pscustomobject]@{
     generated_date = $now.ToString('yyyy-MM-dd')
     ace_benchmark  = $aceBcPct
     ok_count       = $okCount
+    billing_check  = $billingStatus
     error_count    = $errorArray.Count
     errors         = $errorArray
     rates          = $rateArray
@@ -584,7 +673,7 @@ $publicRates = foreach ($r in $rateArray) {
     elseif ($publicStatuses -notcontains $status) { continue }
     elseif ($status -eq 'upcoming') { $publicNote = "Announced in advance; takes effect $($r.effective_from)" }
 
-    [pscustomobject]@{
+    $pub = [pscustomobject]@{
         carrier        = $r.carrier
         service        = $r.service
         segment        = $r.segment
@@ -599,6 +688,11 @@ $publicRates = foreach ($r in $rateArray) {
         benchmark      = $r.benchmark
         benchmark_date = $benchDate
     }
+    # Tells the cloud run to prefer this row over its own FAQ read (flag only, no detail).
+    if (($r.PSObject.Properties.Name -contains 'override') -and $r.override) {
+        $pub | Add-Member -NotePropertyName 'override' -NotePropertyValue $true
+    }
+    $pub
 }
 [object[]] $publicRateArray = @($publicRates)
 $publicSnapshot = [pscustomobject]@{

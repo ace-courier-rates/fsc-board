@@ -24,3 +24,7 @@ preview-screenshot*.png
 
 # Internal handoff notes - names email sources and local-only carriers
 HANDOFF.md
+
+# ACE billing-system FSC check (this PC only): which script reads it, and its result
+data/billing-check.json
+data/billing-fsc.json
