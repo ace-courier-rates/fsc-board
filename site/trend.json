@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-11-10T14:17:13.6835185Z",
+  "generated_at": "2026-11-10T20:19:07.1147200Z",
   "interval": "weekly",
   "window": {
     "from": "2025-11-11",
@@ -372,7 +372,7 @@
     },
     {
       "date": "2026-11-10",
-      "diesel": 268.1,
+      "diesel": 267.5,
       "cities": 7,
       "ace_bc": 54.2,
       "ace_coverage": "7/7"
@@ -1069,7 +1069,7 @@
     },
     {
       "date": "2026-11-10",
-      "diesel": 268.1,
+      "diesel": 267.5,
       "cities": 7
     }
   ],
