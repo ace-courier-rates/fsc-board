@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-11-23T14:17:15.5678606Z",
-  "generated_date": "2026-11-23",
+  "generated_at": "2026-11-24T00:37:34.0230572Z",
+  "generated_date": "2026-11-24",
   "ace_benchmark": 47.3,
   "ok_count": 12,
   "rates": [
@@ -9,7 +9,7 @@
       "service": "British Columbia",
       "segment": "ace",
       "percent": 47.3,
-      "effective_from": "2026-11-18",
+      "effective_from": "2026-11-23",
       "effective_to": "",
       "status": "ok",
       "source": "https://www.acecourier.ca/faq/",
@@ -24,7 +24,7 @@
       "service": "FTL / Direct Drive",
       "segment": "ace",
       "percent": 62.3,
-      "effective_from": "2026-11-18",
+      "effective_from": "2026-11-23",
       "effective_to": "",
       "status": "ok",
       "source": "https://www.acecourier.ca/faq/",

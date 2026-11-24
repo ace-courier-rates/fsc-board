@@ -296,3 +296,5 @@
 {"carrier":"Hi-Way 9 Express","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":79.04,"effective_from":"2026-11-23","effective_to":"","status":"ok","recorded_at":"2026-11-22T20:11:50.0630130Z"}
 {"carrier":"Steele's Transfer","service":"LTL, under 10,000 lb","segment":"ltl","percent":51.6,"effective_from":"2026-11-23","effective_to":"","status":"ok","recorded_at":"2026-11-23T14:17:15.5678606Z"}
 {"carrier":"Steele's Transfer","service":"Truckload, 10,000 lb and over","segment":"ltl","percent":101.9,"effective_from":"2026-11-23","effective_to":"","status":"ok","recorded_at":"2026-11-23T14:17:15.5678606Z"}
+{"carrier":"ACE Courier","service":"British Columbia","segment":"ace","percent":47.3,"effective_from":"2026-11-23","effective_to":"","status":"ok","recorded_at":"2026-11-24T00:37:34.0230572Z"}
+{"carrier":"ACE Courier","service":"FTL / Direct Drive","segment":"ace","percent":62.3,"effective_from":"2026-11-23","effective_to":"","status":"ok","recorded_at":"2026-11-24T00:37:34.0230572Z"}
